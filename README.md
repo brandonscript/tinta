@@ -54,8 +54,8 @@ t.mint("Enterprise.").print()
 
 Glad you asked! Here are some pretty pictures:
 
-<img width="500" alt="Tinta example input" src="https://user-images.githubusercontent.com/1480253/118583296-b14c5f00-b749-11eb-9854-773d01da299e.png">
-<img width="500" alt="Tinta example output" src="https://user-images.githubusercontent.com/1480253/118583353-c4f7c580-b749-11eb-8606-153731c3b437.png">
+<img width="600" alt="Unicorns" src="https://user-images.githubusercontent.com/1480253/118717080-70e8f180-b7da-11eb-8ce8-08fe837fe73f.png"> 
+<img width="600" alt="Starbase" src="https://user-images.githubusercontent.com/1480253/118717091-734b4b80-b7da-11eb-9ecc-5cae5888878b.png">
 
 ## Installation and Getting Started 
 
