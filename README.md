@@ -195,14 +195,6 @@ else:
 tint.print()
 ```
 
-For example:
-```python
-Tinta('A set', 'of strings', 'joined', 'with', 'semicolons', sep=';').print()
-```
-```bash
-~ » A set;of strings;joined;with;semicolons
-```
-
 #### `line()`
 Adds your same text, but preceded by a newline.
 
