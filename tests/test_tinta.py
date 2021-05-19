@@ -19,6 +19,8 @@
 # Where a conflict or dispute would arise between these two licenses, HLv2.1
 # shall take precedence.
 
+import sys
+from pathlib import Path
 import pytest
 
 """Begin import shim
@@ -27,8 +29,6 @@ need to do this in your project, because the package will have
 been installed via pip into the correct modules dir.
 """
 from tinta import Tinta
-import sys
-from pathlib import Path
 sys.path.append(str(Path().cwd().parent / 'tinta'))
 """End import shim
 """

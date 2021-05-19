@@ -19,6 +19,7 @@
 # Where a conflict or dispute would arise between these two licenses, HLv2.1
 # shall take precedence.
 
+import os
 import pytest
 
 if os.getenv('_PYTEST_RAISE', "0") != "0":

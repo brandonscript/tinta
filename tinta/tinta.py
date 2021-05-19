@@ -172,7 +172,7 @@ class Tinta(object):
         # Generate formatted string
         fmt = color(p,
                     fg=self.color
-                    if isinstance(self.color) == int
+                    if isinstance(self.color, int)
                     else getattr(self.ansi, self.color or 'white'),
                     style=style)
 
