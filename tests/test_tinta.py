@@ -24,20 +24,22 @@ import pytest
 """Begin import shim
 Adds the tinta path so we can load the module directly. You won't
 need to do this in your project, because the package will have
-been installed via pip into the correct modules dir."""
+been installed via pip into the correct modules dir.
+"""
 from tinta import Tinta
 import sys
 from pathlib import Path
 sys.path.append(str(Path().cwd().parent / 'tinta'))
-"""End import shim"""
+"""End import shim
+"""
 
 Tinta.load_colors('examples/colors.yaml')
 
 class TestTinta:
-    
+
     def test_init(self):
         assert len(Tinta('initialized').parts) == 1
-    
+
     def test_green(self):
         Tinta().green('green').print()
 
@@ -86,18 +88,18 @@ class TestTinta:
     @pytest.mark.xfail()
     def test_missing_color(self):
         Tinta().sparkle().print()
-        
+
     def test_join(self):
         t = Tinta().add('How long').add('can two people talk about nothing?')
         assert t.plaintext() == 'How long can two people talk about nothing?'
-        
+
         t = Tinta().add('How long', 'can two people talk about nothing?')
         assert t.plaintext() == 'How long can two people talk about nothing?'
-        
+
     def test_sep(self):
         t = Tinta('How long').add('can two people talk about nothing?')
         assert t.plaintext(sep='') == 'How longcan two people talk about nothing?'
-        
+
         t = Tinta('How long').add('can two people', 'talk about nothing?', sep='')
         assert t.plaintext() == 'How long can two peopletalk about nothing?'
 
@@ -109,9 +111,9 @@ class TestTinta:
                    .red('red')
                    .blue('blue')
                    .parts_plaintext) == 3
-        
+
     def test_f_strings(self):
         dog = 'cat'
-        assert(Tinta(f"A {dog} is a human's best friend").plaintext() 
+        assert(Tinta(f"A {dog} is a human's best friend").plaintext()
                == "A cat is a human's best friend")
         assert Tinta(f"A {Tinta().red('hologram').text()} is a human's best friend")

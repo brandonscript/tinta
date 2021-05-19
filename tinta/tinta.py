@@ -7,19 +7,19 @@
 # Full text is available here:
 # https://firstdonoharm.dev/version/2/1/license
 
-# Further to adherence to the Hippocratic Licenese, permission is hereby 
-# granted, free of charge, to any person obtaining a copy of this software 
-# and associated documentation files (the "Software") under the terms of the 
-# MIT License to deal in the Software without restriction, including without 
-# limitation the rights to use, copy, modify, merge, publish, distribute, 
-# sublicense, and / or sell copies of the Software, and to permit persons 
+# Further to adherence to the Hippocratic Licenese, permission is hereby
+# granted, free of charge, to any person obtaining a copy of this software
+# and associated documentation files (the "Software") under the terms of the
+# MIT License to deal in the Software without restriction, including without
+# limitation the rights to use, copy, modify, merge, publish, distribute,
+# sublicense, and / or sell copies of the Software, and to permit persons
 # to whom the Software is furnished to do so, subject to the conditions layed
 # out in the MIT License.
 
 # Where a conflict or dispute would arise between these two licenses, HLv2.1
 # shall take precedence.
 
-"""Tinta is a magical console output tool with support for printing in beautiful 
+"""Tinta is a magical console output tool with support for printing in beautiful
 colors and with rich formatting, like bold and underline. It's so pretty,
 it's almost like a unicorn.
 """
@@ -31,8 +31,8 @@ from colors import color
 import yaml
 
 class Tinta(object):
-    """Tinta is a magical console output tool with support for printing in  
-    beautiful colors and with rich formatting, like bold and underline. It's 
+    """Tinta is a magical console output tool with support for printing in
+    beautiful colors and with rich formatting, like bold and underline. It's
     so pretty, it's almost like a unicorn.
 
     All public methods chain together to form a builder pattern, e.g.:
@@ -44,23 +44,23 @@ class Tinta(object):
         .bold().red(' bold red')
         .dark_gray()
         .dim(' dim').print())
-        
+
     Args:
         *s (tuple(str)): A sequence of one or more text strings, to be joined together.
         sep (str): Used to join segment strings. Defaults to ' '.
-        
+
     Attributes:
-        color (str, int):           A color string or ansi color code (int), 
+        color (str, int):           A color string or ansi color code (int),
                                     e.g. 'white' or 42
         style (str):                A style string, e.g. 'bold', 'dim', 'underline'.
                                     Multiple styles are joined with a +
         parts (list):               A list of richly styled text segments.
         parts_plaintext (list):     A list of unstyled text segments.
-    
-    Methods:    
+
+    Methods:
         text() -> str:              Returns a compiled rich text string
         plaintext() -> str:         Returns a compiled plaintext string
-        add() -> self:              Adds segments using any previously 
+        add() -> self:              Adds segments using any previously
                                     defined styles.
         code() -> self:             Adds segments using the specified ansi code.
         bold() -> self:             Sets segments to bold.
@@ -79,7 +79,7 @@ class Tinta(object):
             *s: Segments of text to add.
             sep (str, optional): Used to join strings. Defaults to ' '.
         """
-        
+
         self.color = 'white'
         self.style = []
         self.parts = []
@@ -95,7 +95,7 @@ class Tinta(object):
             self.add(*s, sep=self._sep(sep))
 
     def __repr__(self) -> str:
-        """Generates a string representation of the current 
+        """Generates a string representation of the current
         Tinta instance.
 
         Returns:
@@ -104,7 +104,7 @@ class Tinta(object):
         return str(self.plaintext())
 
     def _colorizer(self, c: str):
-        """Generates statically typed color methods 
+        """Generates statically typed color methods
         based on colors.yaml.
 
         Args:
@@ -116,7 +116,7 @@ class Tinta(object):
             self.add(*s, sep=self._sep(sep))
             return self
         self.__setattr__(c, add)
-    
+
     def text(self, sep=None) -> str:
         """Returns a compiled rich text string, joined by 'sep'.
 
@@ -149,36 +149,36 @@ class Tinta(object):
         Returns:
             self
         """
-        
+
         # If an empty set of segments is passed, skip to the
         # next segment (to prevent duplicating whitespace).
         if not s:
             return self
-            
+
         # Join all s parts with the specified separator
         p = self._sep(sep).join([str(x) for x in s])
-        
+
         # Set plaintext
         self.parts_plaintext.extend(to_plaintext(p))
-        
+
         # Collect any prefixes that may have been set
         if self._prefixes:
             p = ''.join(self._prefixes) + p
             self._prefixes = []
-        
+
         # Generate style string
         style = '+'.join(list(set(self.style))) if self.style else None
-        
+
         # Generate formatted string
         fmt = color(p,
                     fg=self.color
-                    if type(self.color) == int
+                    if isinstance(self.color) == int
                     else getattr(self.ansi, self.color or 'white'),
                     style=style)
-        
+
         # Set formatted text
         self.parts.append(fmt)
-        
+
         return self
 
     def code(self, *s, code: int = 0, sep=None) -> 'self':
@@ -254,7 +254,7 @@ class Tinta(object):
         return self
 
     def reset(self, *s, sep=None) -> 'self':
-        """Removes all styles and colors, then adds segments to this 
+        """Removes all styles and colors, then adds segments to this
         Tinta instance
 
         Args:
@@ -267,7 +267,7 @@ class Tinta(object):
         self.color = None
         self.normal(*s, sep=self._sep(sep))
         return self
-    
+
     def line(self, *s, sep=None) -> 'self':
         """Adds segments to this Tinta instance, preceded by a new line.
 
@@ -281,7 +281,7 @@ class Tinta(object):
         self._prefixes = os.linesep
         self.add(*s, sep=self._sep(sep))
         return self
-    
+
     def _sep(self, sep=None) -> str:
         """Returns an appropriate separator for the given sep arg.
 
@@ -297,15 +297,15 @@ class Tinta(object):
             else:
                 self.sep = ' '
         else:
-            self.sep = sep        
+            self.sep = sep
         return self.sep
 
-    def print(self, sep=None, end='\n', file=sys.stdout, 
+    def print(self, sep=None, end='\n', file=sys.stdout,
               flush=False, plaintext=False, force=False):
         """Prints a Tinta composite to the console. Once printed,
         this Tinta instance is cleared of all configuration, but can
         can continue to be used to print.
-        
+
         Env: These environment variables, when set, affect Tinta globally.
             TINTA_STEALTH (not None): Hides all console output. Can be
                                       overridden by 'force'.
@@ -322,18 +322,18 @@ class Tinta(object):
         # We don't print if the TINTA_STEALTH env is set
         if os.environ.get('TINTA_STEALTH') is not None:
             return
-        
+
         if plaintext or os.environ.get('TINTA_PLAINTEXT') is not None:
             print(self.plaintext(self._sep(sep)), end=end, file=file, flush=flush)
-            
+
         else:
             print(self.text(self._sep(sep)), end=end, file=file, flush=flush)
-        
+
         self.reset()
         self.parts = []
         self.parts_plaintext = []
         print('\033[0m', end='')
-            
+
     @staticmethod
     def discover():
         """Prints all 256 colors in a matrix on your system."""
@@ -344,7 +344,7 @@ class Tinta(object):
                 sys.stdout.write(
                     u"\u001b[38;5;" + code + "m " + code.ljust(4))
             print(u"\u001b[0m")
-            
+
     @classmethod
     def load_colors(cls, path):
         cls.ansi = cls._AnsiColors(path)
@@ -353,10 +353,10 @@ class Tinta(object):
 
         """Color builder for Tinta's console output.
 
-        ANSI color map for console output. Get a list of colors here = 
+        ANSI color map for console output. Get a list of colors here =
         http://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#256-colors
 
-        You can change the colors the terminal outputs by changing the 
+        You can change the colors the terminal outputs by changing the
         ANSI values in colors.yaml.
         """
 

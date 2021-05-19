@@ -22,11 +22,13 @@
 """Begin import shim
 Adds the tinta path so we can load the module directly. You won't
 need to do this in your project, because the package will have
-been installed via pip into the correct modules dir."""
+been installed via pip into the correct modules dir.
+"""
 import sys
 from pathlib import Path
 sys.path.append(str(Path().cwd().parent / 'tinta'))
-"""End import shim"""
+"""End import shim
+"""
 
 from tinta import Tinta
 Tinta.load_colors('examples/colors.yaml')
@@ -40,10 +42,10 @@ Tinta().red("That's a really nice red car!").print()
 # Prints the first half in blue, then the rest in red.
 Tinta().blue("That's a cool blue car").red("but not as cool as my red one").print()
 
-# Prints the first few words in green, separated by _*_, 
+# Prints the first few words in green, separated by _*_,
 # then the final word in purple.
-Tinta().green("Sometimes", "We", "Want", "To", 
-              "Join", "Words", "Differently", 
+Tinta().green("Sometimes", "We", "Want", "To",
+              "Join", "Words", "Differently",
               sep=' * ').purple('Neat!').print()
 
 # Here we underline a word.
@@ -72,7 +74,7 @@ tint.line('We can even write to a new line!')
 tint.print()
 
 # You could do the same using multiple segments, or ()
-Tinta().vanilla('I like ice cream', 
+Tinta().vanilla('I like ice cream',
                 'it comes in all sorts'
                 'of great and yummy flavors.').print()
 
@@ -85,7 +87,7 @@ tint.add('After a print, Tinta resets itself').green()
 tint.line('but you can still use the same initialized version.')
 tint.print()
 
-# Using native print()'s built-in end, we can terminate a string 
+# Using native print()'s built-in end, we can terminate a string
 # without a newline.
 Tinta('And of course as always,').print(end='')
 Tinta(' you can print with end=\'\'').print()

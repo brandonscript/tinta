@@ -3,11 +3,11 @@
 
 <img width="200" alt="Tinta Logo" src="https://user-images.githubusercontent.com/1480253/118584629-38023b80-b74c-11eb-8511-05258af553fb.png">
 
-Tinta is a magical console output tool for modern Python with support for printing in beautiful 
+Tinta is a magical console output tool for modern Python with support for printing in beautiful
 colors and with rich formatting, like bold and underline. It's so pretty,
 it's almost like a unicorn!
 
-![version](https://img.shields.io/badge/version-0.1.0--alpha-green.svg) [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs) [![](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162)](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](code_of_conduct.md)
+![version](https://img.shields.io/badge/version-0.1.0--alpha-green.svg) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=brandonscript/tinta&amp;utm_campaign=Badge_Grade) [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs) [![](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162)](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](code_of_conduct.md)
 
 ## Features and Tinta Basics
 
@@ -54,23 +54,23 @@ t.mint("Enterprise.").print()
 
 Glad you asked! Here are some pretty pictures:
 
-<img width="600" alt="Unicorns" src="https://user-images.githubusercontent.com/1480253/118717080-70e8f180-b7da-11eb-8ce8-08fe837fe73f.png"> 
+<img width="600" alt="Unicorns" src="https://user-images.githubusercontent.com/1480253/118717080-70e8f180-b7da-11eb-8ce8-08fe837fe73f.png">
 <img width="600" alt="Starbase" src="https://user-images.githubusercontent.com/1480253/118717091-734b4b80-b7da-11eb-9ecc-5cae5888878b.png">
 
-## Installation and Getting Started 
+## Installation and Getting Started
 
 Install Tinta:
 
-```bash 
+```bash
 pip install tinta
 ```
-    
+
 Add Tinta to your project, and optionally configure a path to your `colors.yaml` file. This path can be relative, or absolute; the best way to make a path is using `pathlib.Path()`.
 
 ```python
 from tinta import Tinta
 
-# or to specify your custom colors, 
+# or to specify your custom colors,
 # relative to your project's cwd:
 
 from pathlib import Path
@@ -144,7 +144,7 @@ All `Tinta` and dynamic color methods will make available the following attribut
  - `bold() -> self` – Sets segments to bold.
  - `underline() -> self` – Sets segments to underline.
  - `dim() -> self` – Sets segments to a darker, dimmed color.
- - `code() -> self` – Adds segments using the specified ansi code. 
+ - `code() -> self` – Adds segments using the specified ansi code.
  - `normal() -> self` – Resets the style to default.
  - `reset() -> self` – Resets both style and color to default.
 
@@ -158,7 +158,7 @@ Tinta().dim('Dimmed', 'text', sep='_').print()
 
 #### `print()`
 
-Prints to the console. Probably the most important method, because if you don't print, you don't see anything at all! 
+Prints to the console. Probably the most important method, because if you don't print, you don't see anything at all!
 A good first step in troubleshooting is checking that you remembered to `print()` (ask me how I know...)
 
 This supports all the built-in Python 3 `print()` methods, too (`sep`, `end`, `file`, `flush`), as well as:
@@ -168,10 +168,10 @@ This supports all the built-in Python 3 `print()` methods, too (`sep`, `end`, `f
 
 ```python
 # Prints in plaintext
-Tinta().purple('A bird').print(plaintext=True) 
+Tinta().purple('A bird').print(plaintext=True)
 
 # Always prints, even if 'env::TINTA_STEALTH' is set)
-Tinta().green('A plane').print(force=True) 
+Tinta().green('A plane').print(force=True)
 ```
 
 It's also important to note that `print()` doesn't make a variable unusable, it just resets and clears itself when called. This means you can do:
@@ -223,7 +223,7 @@ Sometimes it's useful to globally configure `Tinta` on a system where you might 
 
 `TINTA_SEPARATOR` – Changes the default separator (`' '`) to this value.
 
-  
+
 ## Running Tests
 
 To run tests, run the following command:
@@ -241,7 +241,7 @@ python -m pytest -xv
 ## Contributing
 
 Contributions are welcome! Please send in a PR with a clear explanation of what you're adding and why, and where applicable, add tests to validate. Please read our [code of conduct](CODE_OF_CONDUCT.md) before contributing.
-  
+
 ## Acknowledgements
 
 Special thanks to [@katherinecodes](https://twitter.com/katherinecodes) for [readme.so](https://readme.so/), [@jessicaspacekat](https://twitter.com/jessicaspacekat) for [rikeripsum.com](http://rikeripsum.com), and [ansicolors](https://github.com/jonathaneunice/colors/).
@@ -249,4 +249,4 @@ Special thanks to [@katherinecodes](https://twitter.com/katherinecodes) for [rea
 
 Tinta is licensed under both the [MIT License](LICENSE) and the [Hippocratic License](https://firstdonoharm.dev/version/2/1/license.html). Were a conflict or dispute to arise between these two licenses, the **Hippocratic License** license shall take precedence. Under its principles of Do No Harm, no portion of this software may be used to (or be a part of software that can be used to) cause, infer, encourage, incite, or otherwise lead to physical or verbal harm for any person or people, _especially_ marginalized and underrepresented people.
 
-  
+
