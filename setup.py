@@ -26,14 +26,14 @@ with Path('README.md').open() as f:
     long_description = f.read()
 
 setup(name='tinta',
-      version='0.1.0a1-3',
+      version='0.1.1a1-0',
       description='Tinta, the a magical console output tool.',
       long_description=long_description,
       long_description_content_type='text/markdown',
       url='http://github.com/brandonscript/tinta',
       author='Brandon Shelley',
       author_email='brandon@pacificaviator.co',
-      install_requires=['ansicolors', 'pyyaml'],
+      install_requires=['ansicolors'],
       include_package_data=True,
       license='MIT',
       packages=['tinta'],

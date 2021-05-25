@@ -1,2 +1,1 @@
 ansicolors>=1.1.8
-pyyaml>=5.4

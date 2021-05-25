@@ -15,11 +15,11 @@ Tinta takes a statically typed approach to handling rich-color console output.
 
 In the past you might have fiddled with ANSI colors codes, or passed strings to a generic class, only to discover you typo'd one of them! (Yes, we've all been there).
 
-But with Tinta, you can create your own `colors.yaml` file, which dynamically generates builder pattern methods for `Tinta`. If you add a color for `wine` to your colors file, you can then use:
+But with Tinta, you can create your own `colors.ini` file, which dynamically generates builder pattern methods for `Tinta`. If you add a color for `wine` to your colors file, you can then use:
 
 ```python
 from tinta import Tinta
-Tinta.load_colors('colors.yaml')
+Tinta.load_colors('colors.ini')
 Tinta().wine('sip')
 ```
 
@@ -65,7 +65,7 @@ Install Tinta:
 pip install tinta
 ```
 
-Add Tinta to your project, and optionally configure a path to your `colors.yaml` file. This path can be relative, or absolute; the best way to make a path is using `pathlib.Path()`.
+Add Tinta to your project, and optionally configure a path to your `colors.ini` file. This path can be relative, or absolute; the best way to make a path is using `pathlib.Path()`.
 
 ```python
 from tinta import Tinta
@@ -75,7 +75,7 @@ from tinta import Tinta
 
 from pathlib import Path
 from tinta import Tinta
-Tinta.load_colors(Path().cwd() / 'config/colors.yaml')
+Tinta.load_colors(Path().cwd() / 'config/colors.ini')
 ```
 
 To discover what colors are available on your console:
@@ -84,9 +84,9 @@ To discover what colors are available on your console:
 Tinta.discover()
 ```
 
-An example `colors.yaml` file might look like:
+An example `colors.ini` file might look like:
 
-```yaml
+```ini
 # A list of ansi colors for your console.
 green: 35
 red: 1
@@ -99,7 +99,7 @@ yellow: 214
 
 #### Dynamic methods
 
-These methods are loaded dynamically from your `colors.yaml` file:
+These methods are loaded dynamically from your `colors.ini` file:
 
 ```python
 Tinta().green()
@@ -206,13 +206,13 @@ Tinta('A cat').line('scratches').print()
 
 #### `code()`
 
-Sometimes you might want to use a color that wasn't defined in your `colors.yaml`. For that, you can use `.code()`.
+Sometimes you might want to use a color that wasn't defined in your `colors.ini`. For that, you can use `.code()`.
 Just set the `code` arg to specify an ANSI color code:
 ```python
 Tinta().code('A bear', code=42).print()
 ```
 
-This is useful for adding colors on the fly if they aren't defined in `colors.yaml`.
+This is useful for adding colors on the fly if they aren't defined in `colors.ini`.
 ## Environment Variables
 
 Sometimes it's useful to globally configure `Tinta` on a system where you might want it to behave differently, without changing your source code. If these Environment variables are present on the system, they will be considered True.

@@ -33,7 +33,7 @@ from tinta import Tinta
 """End import shim
 """
 
-Tinta.load_colors('examples/colors.yaml')
+Tinta.load_colors('examples/colors.ini')
 
 class TestTinta:
 

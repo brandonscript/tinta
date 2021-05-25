@@ -26,9 +26,10 @@ it's almost like a unicorn.
 
 import os, sys, re
 from pathlib import Path
+import configparser
+config = configparser.ConfigParser()
 
 from colors import color
-import yaml
 
 class Tinta(object):
     """Tinta is a magical console output tool with support for printing in
@@ -105,7 +106,7 @@ class Tinta(object):
 
     def _colorizer(self, c: str):
         """Generates statically typed color methods
-        based on colors.yaml.
+        based on colors.ini.
 
         Args:
             c (str): Method name of color, e.g. 'pink', 'blue'.
@@ -357,17 +358,16 @@ class Tinta(object):
         http://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#256-colors
 
         You can change the colors the terminal outputs by changing the
-        ANSI values in colors.yaml.
+        ANSI values in colors.ini.
         """
 
         def __init__(self, path=None):
-            path = Path(path) if path else Path(__file__).parent / 'colors.yaml'
+            path = Path(path) if path else Path(__file__).parent / 'colors.ini'
             if not path.is_absolute():
                 path = Path().cwd() / path
-            with open(path, 'r') as f:
-                colormap = yaml.safe_load(f)
-                for k, v in colormap.items():
-                    self.__setattr__(k, v)
+                config.read(path)
+                for k, v in config['colors'].items():
+                    self.__setattr__(k, int(v))
 
 
 Tinta.ansi = Tinta._AnsiColors()
