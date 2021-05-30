@@ -92,7 +92,7 @@ class Tinta(object):
         self._prefixes = []
 
         # Inject ANSI helper functions
-        for c in vars(self.ansi):
+        for c in vars(self.colors):
             self._colorizer(c)
 
         if s:
@@ -177,7 +177,7 @@ class Tinta(object):
         fmt = color(p,
                     fg=self.color
                     if isinstance(self.color, int)
-                    else getattr(self.ansi, self.color or 'white'),
+                    else getattr(self.colors, self.color or 'white'),
                     style=style)
 
         # Set formatted text
@@ -370,7 +370,7 @@ class Tinta(object):
 
     @classmethod
     def load_colors(cls, path):
-        cls.ansi = cls._AnsiColors(path)
+        cls.colors = cls._AnsiColors(path)
 
     class _AnsiColors:
 
@@ -395,7 +395,7 @@ class Tinta(object):
                 self.__setattr__(k, int(v))
 
 
-Tinta.ansi = Tinta._AnsiColors()
+Tinta.colors = Tinta._AnsiColors()
 
 def to_plaintext(*s):
     ansi_escape = re.compile(r'\x1b\[(K|.*?m)', re.I)
