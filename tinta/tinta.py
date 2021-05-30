@@ -140,7 +140,7 @@ class Tinta(object):
         """
         return self._sep(sep).join(self.parts_plaintext)
 
-    def add(self, *s, sep=None) -> 'self':
+    def add(self, *s, sep=None) -> 'Tinta':
         """Adds segments to this Tinta instance
 
         Args:
@@ -182,7 +182,7 @@ class Tinta(object):
 
         return self
 
-    def code(self, *s, code: int = 0, sep=None) -> 'self':
+    def code(self, *s, code: int = 0, sep=None) -> 'Tinta':
         """Adds segments of text colored with the specified ANSI code.
 
         Args:
@@ -197,7 +197,7 @@ class Tinta(object):
         self.add(*s, sep=self._sep(sep))
         return self
 
-    def bold(self, *s, sep=None) -> 'self':
+    def bold(self, *s, sep=None) -> 'Tinta':
         """Adds bold segments to this Tinta instance
 
         Args:
@@ -211,7 +211,7 @@ class Tinta(object):
         self.add(*s, sep=self._sep(sep))
         return self
 
-    def underline(self, *s, sep=None) -> 'self':
+    def underline(self, *s, sep=None) -> 'Tinta':
         """Adds underline segments to this Tinta instance
 
         Args:
@@ -225,7 +225,7 @@ class Tinta(object):
         self.add(*s, sep=self._sep(sep))
         return self
 
-    def dim(self, *s, sep=None) -> 'self':
+    def dim(self, *s, sep=None) -> 'Tinta':
         """Adds darker (dimmed) segments to this Tinta instance
 
         Args:
@@ -239,7 +239,7 @@ class Tinta(object):
         self.add(*s, sep=self._sep(sep))
         return self
 
-    def normal(self, *s, sep=None) -> 'self':
+    def normal(self, *s, sep=None) -> 'Tinta':
         """Removes all styles, then adds segments to this Tinta instance
 
         Args:
@@ -254,7 +254,7 @@ class Tinta(object):
         self.add(*s, sep=self._sep(sep))
         return self
 
-    def reset(self, *s, sep=None) -> 'self':
+    def reset(self, *s, sep=None) -> 'Tinta':
         """Removes all styles and colors, then adds segments to this
         Tinta instance
 
@@ -269,7 +269,7 @@ class Tinta(object):
         self.normal(*s, sep=self._sep(sep))
         return self
 
-    def line(self, *s, sep=None) -> 'self':
+    def line(self, *s, sep=None) -> 'Tinta':
         """Adds segments to this Tinta instance, preceded by a new line.
 
         Args:
@@ -365,9 +365,12 @@ class Tinta(object):
             path = Path(path) if path else Path(__file__).parent / 'colors.ini'
             if not path.is_absolute():
                 path = Path().cwd() / path
-                config.read(path)
-                for k, v in config['colors'].items():
-                    self.__setattr__(k, int(v))
+            if not path.exists():
+                raise FileNotFoundError(
+                    f"Tinta failed to load colors, '{path}' does not exist.")
+            config.read(path)
+            for k, v in config['colors'].items():
+                self.__setattr__(k, int(v))
 
 
 Tinta.ansi = Tinta._AnsiColors()
