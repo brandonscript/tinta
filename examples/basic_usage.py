@@ -25,13 +25,14 @@ need to do this in your project, because the package will have
 been installed via pip into the correct modules dir.
 """
 import sys
+import time
 from pathlib import Path
 sys.path.append(str(Path().cwd().parent / 'tinta'))
 """End import shim
 """
 
 from tinta import Tinta
-Tinta.load_colors('examples/colors.yaml')
+Tinta.load_colors('examples/colors.ini')
 
 # The most basic example we can get.
 Tinta("That's a really nice car!").print()
@@ -110,3 +111,13 @@ Tinta('A bird', 'I like birds', sep='; ').add('And also cats', 'and dogs', sep='
        .normal().pink('little children,')
        .dark_gray('and ships named')
        .purple("Enterprise.").print())
+
+# And finally, you can use some helper tools to clear the current
+# console and move up a line.
+Tinta().yellow('Loading...').print()
+time.sleep(1)
+Tinta.clearline()
+Tinta().green('Done').print()
+time.sleep(1)
+Tinta.up()
+Tinta().green('Done :)').print()

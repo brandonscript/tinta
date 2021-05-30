@@ -31,6 +31,9 @@ config = configparser.ConfigParser()
 
 from colors import color
 
+CURSOR_UP_ONE = '\x1b[1A'
+ERASE_LINE = '\x1b[2K'
+
 class Tinta(object):
     """Tinta is a magical console output tool with support for printing in
     beautiful colors and with rich formatting, like bold and underline. It's
@@ -345,6 +348,25 @@ class Tinta(object):
                 sys.stdout.write(
                     u"\u001b[38;5;" + code + "m " + code.ljust(4))
             print(u"\u001b[0m")
+
+    @staticmethod
+    def clearline():
+        """Clears the current printed line.
+        """
+
+        if sys.stdout:
+            sys.stdout.write(CURSOR_UP_ONE)
+            sys.stdout.write(ERASE_LINE)
+            sys.stdout.flush()
+
+    @staticmethod
+    def up():
+        """Moves up to the previous line.
+        """
+
+        if sys.stdout:
+            sys.stdout.write(CURSOR_UP_ONE)
+            sys.stdout.flush()
 
     @classmethod
     def load_colors(cls, path):
