@@ -3,9 +3,7 @@
 
 <img width="200" alt="Tinta Logo" src="https://user-images.githubusercontent.com/1480253/118584629-38023b80-b74c-11eb-8511-05258af553fb.png">
 
-Tinta is a magical console output tool for modern Python with support for printing in beautiful
-colors and with rich formatting, like bold and underline. It's so pretty,
-it's almost like a unicorn!
+Tinta is a magical console output tool with support for printing in beautiful colors and with rich formatting, like bold and underline, using static, chain-able methods. It's so pretty, it's almost like a unicorn!
 
 ![version](https://img.shields.io/badge/version-0.1.2--alpha-green.svg) [![Build Status](https://travis-ci.com/brandonscript/tinta.svg?branch=main)](https://travis-ci.com/brandonscript/tinta) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=brandonscript/tinta&amp;utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs) [![](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162)](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](code_of_conduct.md)
 
@@ -41,7 +39,7 @@ t = Tinta().mint('Fate.')
 t.dark_gray('It protects')
 t.underline().red('fools')
 
-if chilren:
+if children:
     t.normal().pink('little children')
 else:
     t.normal().yellow('spotted cats')
