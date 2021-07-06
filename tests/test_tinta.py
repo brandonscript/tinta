@@ -97,14 +97,25 @@ class TestTinta:
         assert t.plaintext() == 'How long can two people talk about nothing?'
 
     def test_sep(self):
-        t = Tinta('How long').add('can two people talk about nothing?')
-        assert t.plaintext(sep='') == 'How longcan two people talk about nothing?'
+        t = Tinta('How long', sep='').add('can two people talk about nothing?').add('Hmm?')
+        assert t.plaintext(sep='') == 'How longcan two people talk about nothing? Hmm?'
 
         t = Tinta('How long').add('can two people', 'talk about nothing?', sep='')
         assert t.plaintext() == 'How long can two peopletalk about nothing?'
 
+        t = Tinta().pink('A section').add().white().blue(
+            'of text', sep='').green(',').add().purple('separated.')
+        assert t.plaintext() == 'A section of text, separated.'
+
     def test_parts(self):
         assert len(Tinta().green('green').red('red').blue('blue').parts) == 3
+        assert len(Tinta()
+                   .green('green')
+                   .underline()
+                   .red('red')
+                   .blue('blue')
+                   .yellow('yellow')
+                   .parts_formatted) == 4
         assert len(Tinta()
                    .green('green')
                    .underline()

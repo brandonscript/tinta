@@ -58,7 +58,8 @@ class Tinta(object):
                                     e.g. 'white' or 42
         style (str):                A style string, e.g. 'bold', 'dim', 'underline'.
                                     Multiple styles are joined with a +
-        parts (list):               A list of richly styled text segments.
+        parts (list):               A list of Part objects.
+        parts_formatted (list):     A list of richly styled text segments.
         parts_plaintext (list):     A list of unstyled text segments.
 
     Methods:
@@ -87,8 +88,7 @@ class Tinta(object):
         self.color = 'white'
         self.style = []
         self.parts = []
-        self.parts_plaintext = []
-        self.sep = self._sep(sep)
+        self.default_sep = self._sep(sep)
         self._prefixes = []
 
         # Inject ANSI helper functions
@@ -130,7 +130,24 @@ class Tinta(object):
         Returns:
             str: A rich text string.
         """
-        return self._sep(sep).join(self.parts)
+        return ''.join([f'{part.fmt}{part.sep}' for part in self.parts]).rstrip(
+            self.parts[-1].sep)
+
+    @property
+    def parts_formatted(self) -> list:
+        """Returns a list of richly formated string parts
+
+        Returns:
+            str: A list of formatted strings."""
+        return [part.fmt for part in self.parts]
+
+    @property
+    def parts_plaintext(self) -> list:
+        """Returns a list of plaintext string parts
+
+        Returns:
+            str: A list of plaintext strings."""
+        return [part.pln for part in self.parts]
 
     def plaintext(self, sep=None) -> str:
         """Returns a compiled plaintext string, joined by 'sep'.
@@ -141,7 +158,8 @@ class Tinta(object):
         Returns:
             str: A plaintext string.
         """
-        return self._sep(sep).join(self.parts_plaintext)
+        return ''.join([f'{part.pln}{part.sep}' for part in self.parts]).rstrip(
+            self.parts[-1].sep)
 
     def add(self, *s, sep=None) -> 'Tinta':
         """Adds segments to this Tinta instance
@@ -159,11 +177,10 @@ class Tinta(object):
         if not s:
             return self
 
-        # Join all s parts with the specified separator
-        p = self._sep(sep).join([str(x) for x in s])
+        sep = self._sep(sep)
 
-        # Set plaintext
-        self.parts_plaintext.extend(to_plaintext(p))
+        # Join all s parts with the specified separator
+        p = sep.join([str(x) for x in s])
 
         # Collect any prefixes that may have been set
         if self._prefixes:
@@ -180,8 +197,8 @@ class Tinta(object):
                     else getattr(self.colors, self.color or 'white'),
                     style=style)
 
-        # Set formatted text
-        self.parts.append(fmt)
+        # Append to parts list
+        self.parts.append(Tinta.Part(fmt, p, sep))
 
         return self
 
@@ -297,12 +314,12 @@ class Tinta(object):
         """
         if sep is None:
             if os.environ.get('TINTA_SEPARATOR') is not None:
-                self.sep = os.environ.get('TINTA_SEPARATOR')
+                sep = os.environ.get('TINTA_SEPARATOR')
             else:
-                self.sep = ' '
+                sep = ' '
         else:
-            self.sep = sep
-        return self.sep
+            sep = sep
+        return sep
 
     def print(self, sep=None, end='\n', file=sys.stdout,
               flush=False, plaintext=False, force=False):
@@ -335,7 +352,6 @@ class Tinta(object):
 
         self.reset()
         self.parts = []
-        self.parts_plaintext = []
         print('\033[0m', end='')
 
     @staticmethod
@@ -371,6 +387,22 @@ class Tinta(object):
     @classmethod
     def load_colors(cls, path):
         cls.colors = cls._AnsiColors(path)
+
+
+    class Part:
+        """A segment part of text, intended to be joined together
+        for a print statement.
+
+        Args:
+            fmt (str):      A formatted string of text.
+            p (str):        A plaintext representation of fmt.
+            sep (str):      Used to join segment strings. Defaults to ' '.
+        """
+
+        def __init__(self, fmt: str, pln: str, sep: str=None):
+            self.fmt = fmt
+            self.pln = pln
+            self.sep = sep
 
     class _AnsiColors:
 

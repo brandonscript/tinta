@@ -26,7 +26,7 @@ with Path('README.md').open() as f:
     long_description = f.read()
 
 setup(name='tinta',
-      version='0.1.2a1-0',
+      version='0.1.3a1-0',
       description='Tinta, the a magical console output tool.',
       long_description=long_description,
       long_description_content_type='text/markdown',

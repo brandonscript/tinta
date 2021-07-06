@@ -112,6 +112,14 @@ Tinta('A bird', 'I like birds', sep='; ').add('And also cats', 'and dogs', sep='
        .dark_gray('and ships named')
        .purple("Enterprise.").print())
 
+# Tinta is also smart about how we join things together. If you join
+# several objects together, it collapses repeated whitespace. You
+# can also use 'sep' to force sections to collapse.
+t = Tinta().pink('A section').add().white().blue(
+    'of text', sep='').green(',').add().purple('separated.')
+print(t.parts)
+t.print()
+
 # And finally, you can use some helper tools to clear the current
 # console and move up a line.
 Tinta().yellow('Loading...').print()
