@@ -131,7 +131,7 @@ class Tinta(object):
             str: A rich text string.
         """
         return ''.join([f'{part.fmt}{part.sep}' for part in self.parts]).rstrip(
-            self.parts[-1].sep)
+            self.parts[-1].sep) if self.parts else ''
 
     @property
     def parts_formatted(self) -> list:
@@ -159,7 +159,7 @@ class Tinta(object):
             str: A plaintext string.
         """
         return ''.join([f'{part.pln}{part.sep}' for part in self.parts]).rstrip(
-            self.parts[-1].sep)
+            self.parts[-1].sep) if self.parts else ''
 
     def add(self, *s, sep=None) -> 'Tinta':
         """Adds segments to this Tinta instance

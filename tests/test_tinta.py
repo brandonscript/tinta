@@ -35,10 +35,12 @@ from tinta import Tinta
 
 Tinta.load_colors('examples/colors.ini')
 
-class TestTinta:
+class TestInit:
 
     def test_init(self):
         assert len(Tinta('initialized').parts) == 1
+
+class TestColors:
 
     def test_green(self):
         Tinta().green('green').print()
@@ -85,9 +87,25 @@ class TestTinta:
     def test_white(self):
         Tinta().white('white').print()
 
+class TestEdgeCases:
+
     @pytest.mark.xfail()
     def test_missing_color(self):
         Tinta().sparkle().print()
+
+    def test_print_empty(self):
+        Tinta().print()
+
+    def test_print_empty_str(self):
+        Tinta('').print()
+
+    def test_print_whitespace(self):
+        Tinta(' ').print()
+    
+    def test_print_none(self):
+        Tinta(None).print()
+
+class TestComplexStructure:
 
     def test_join(self):
         t = Tinta().add('How long').add('can two people talk about nothing?')

@@ -26,7 +26,7 @@ with Path('README.md').open() as f:
     long_description = f.read()
 
 setup(name='tinta',
-      version='0.1.3a1-0',
+      version='0.1.4a1-0',
       description='Tinta, the a magical console output tool.',
       long_description=long_description,
       long_description_content_type='text/markdown',
@@ -49,5 +49,6 @@ setup(name='tinta',
           'Programming Language :: Python :: 3.7',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
+          'Programming Language :: Python :: 3.10',
       ],
       zip_safe=False)
