@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Tinta
-# Copyright 2021 github.com/brandoncript
+# Copyright 2023 github.com/brandoncript
 
 # This program is bound to the Hippocratic License 2.1
 # Full text is available here:
@@ -24,15 +24,21 @@ colors and with rich formatting, like bold and underline. It's so pretty,
 it's almost like a unicorn.
 """
 
-import os, sys, re
-from pathlib import Path
 import configparser
-config = configparser.ConfigParser()
+import os
+import re
+import sys
+from pathlib import Path
+from typing import Optional
 
 from colors import color
 
+config = configparser.ConfigParser()
+
+
 CURSOR_UP_ONE = '\x1b[1A'
 ERASE_LINE = '\x1b[2K'
+
 
 class Tinta(object):
     """Tinta is a magical console output tool with support for printing in
@@ -299,7 +305,7 @@ class Tinta(object):
         Returns:
             self
         """
-        self._prefixes = os.linesep
+        self._prefixes = [os.linesep]
         self.add(*s, sep=self._sep(sep))
         return self
 
@@ -319,7 +325,7 @@ class Tinta(object):
                 sep = ' '
         else:
             sep = sep
-        return sep
+        return sep or ' '
 
     def print(self, sep=None, end='\n', file=sys.stdout,
               flush=False, plaintext=False, force=False):
@@ -345,7 +351,8 @@ class Tinta(object):
             return
 
         if plaintext or os.environ.get('TINTA_PLAINTEXT') is not None:
-            print(self.plaintext(self._sep(sep)), end=end, file=file, flush=flush)
+            print(self.plaintext(self._sep(sep)),
+                  end=end, file=file, flush=flush)
 
         else:
             print(self.text(self._sep(sep)), end=end, file=file, flush=flush)
@@ -355,8 +362,9 @@ class Tinta(object):
         print('\033[0m', end='')
 
     @staticmethod
-    def discover():
-        """Prints all 256 colors in a matrix on your system."""
+    def discover(text_only=False):
+        """Prints all 256 colors in a matrix on your system. If text_only is True,
+        it will print numbers in their colors instead of background colors."""
         print('\n')
         for i in range(0, 16):
             for j in range(0, 16):
@@ -388,7 +396,6 @@ class Tinta(object):
     def load_colors(cls, path):
         cls.colors = cls._AnsiColors(path)
 
-
     class Part:
         """A segment part of text, intended to be joined together
         for a print statement.
@@ -399,7 +406,7 @@ class Tinta(object):
             sep (str):      Used to join segment strings. Defaults to ' '.
         """
 
-        def __init__(self, fmt: str, pln: str, sep: str=None):
+        def __init__(self, fmt: str, pln: str, sep: Optional[str] = None):
             self.fmt = fmt
             self.pln = pln
             self.sep = sep
@@ -428,6 +435,7 @@ class Tinta(object):
 
 
 Tinta.colors = Tinta._AnsiColors()
+
 
 def to_plaintext(*s):
     ansi_escape = re.compile(r'\x1b\[(K|.*?m)', re.I)

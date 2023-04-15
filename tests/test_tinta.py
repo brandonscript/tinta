@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Tinta
-# Copyright 2021 github.com/brandoncript
+# Copyright 2023 github.com/brandoncript
 
 # This program is bound to the Hippocratic License 2.1
 # Full text is available here:
@@ -21,6 +21,8 @@
 
 import pytest
 
+from tinta import Tinta
+
 """Begin import shim
 Adds the tinta path so we can load the module directly. You won't
 need to do this in your project, because the package will have
@@ -28,17 +30,20 @@ been installed via pip into the correct modules dir.
 """
 import sys
 from pathlib import Path
+
 sys.path.append(str(Path().cwd().parent / 'tinta'))
-from tinta import Tinta
+
 """End import shim
 """
 
 Tinta.load_colors('examples/colors.ini')
 
+
 class TestInit:
 
     def test_init(self):
         assert len(Tinta('initialized').parts) == 1
+
 
 class TestColors:
 
@@ -87,6 +92,7 @@ class TestColors:
     def test_white(self):
         Tinta().white('white').print()
 
+
 class TestEdgeCases:
 
     @pytest.mark.xfail()
@@ -101,9 +107,10 @@ class TestEdgeCases:
 
     def test_print_whitespace(self):
         Tinta(' ').print()
-    
+
     def test_print_none(self):
         Tinta(None).print()
+
 
 class TestComplexStructure:
 
@@ -115,10 +122,13 @@ class TestComplexStructure:
         assert t.plaintext() == 'How long can two people talk about nothing?'
 
     def test_sep(self):
-        t = Tinta('How long', sep='').add('can two people talk about nothing?').add('Hmm?')
-        assert t.plaintext(sep='') == 'How longcan two people talk about nothing? Hmm?'
+        t = Tinta('How long', sep='').add(
+            'can two people talk about nothing?').add('Hmm?')
+        assert t.plaintext(
+            sep='') == 'How longcan two people talk about nothing? Hmm?'
 
-        t = Tinta('How long').add('can two people', 'talk about nothing?', sep='')
+        t = Tinta('How long').add('can two people',
+                                  'talk about nothing?', sep='')
         assert t.plaintext() == 'How long can two peopletalk about nothing?'
 
         t = Tinta().pink('A section').add().white().blue(
@@ -143,6 +153,7 @@ class TestComplexStructure:
 
     def test_f_strings(self):
         dog = 'cat'
-        assert(Tinta(f"A {dog} is a human's best friend").plaintext()
-               == "A cat is a human's best friend")
-        assert Tinta(f"A {Tinta().red('hologram').text()} is a human's best friend")
+        assert (Tinta(f"A {dog} is a human's best friend").plaintext()
+                == "A cat is a human's best friend")
+        assert Tinta(
+            f"A {Tinta().red('hologram').text()} is a human's best friend")
