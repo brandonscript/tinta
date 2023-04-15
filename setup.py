@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 
+"""
 # Tinta
-# Copyright 2021 github.com/brandoncript
+# Copyright 2023 github.com/brandoncript
 
 # This program is bound to the Hippocratic License 2.1
 # Full text is available here:
@@ -18,15 +19,17 @@
 
 # Where a conflict or dispute would arise between these two licenses, HLv2.1
 # shall take precedence.
+"""
 
-from setuptools import setup
 from pathlib import Path
 
-with Path('README.md').open() as f:
+from setuptools import setup
+
+with Path('README.md').open(encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='tinta',
-      version='0.1.4a1-0',
+      version='0.1.5b1',
       description='Tinta, the a magical console output tool.',
       long_description=long_description,
       long_description_content_type='text/markdown',
@@ -40,7 +43,7 @@ setup(name='tinta',
       keywords='console colors ansi print terminal development',
       python_requires='>=3.6',
       classifiers=[
-          'Development Status :: 3 - Alpha',
+          'Development Status :: 4 - Beta',
           'Intended Audience :: Developers',
           'Environment :: Console',
           'Topic :: Utilities',
@@ -50,5 +53,6 @@ setup(name='tinta',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
           'Programming Language :: Python :: 3.10',
+          'Programming Language :: Python :: 3.11'
       ],
       zip_safe=False)

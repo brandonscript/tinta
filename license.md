@@ -1,4 +1,4 @@
-[Tinta] Copyright (2021) (github.com/brandonscript)(“Licensor”)
+[Tinta] Copyright (2023) (github.com/brandonscript)(“Licensor”)
 
 Hippocratic License Version Number: 2.1.
 

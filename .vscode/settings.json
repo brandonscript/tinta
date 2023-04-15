@@ -1,28 +1,55 @@
 {
-    "python.pythonPath": "/Users/brandonscript/.pyenv/versions/3.10-dev/bin/python",
-    "workbench.colorCustomizations": {
-        "activityBar.activeBackground": "#93e6fc",
-        "activityBar.activeBorder": "#fa45d4",
-        "activityBar.background": "#93e6fc",
-        "activityBar.foreground": "#15202b",
-        "activityBar.inactiveForeground": "#15202b99",
-        "activityBarBadge.background": "#fa45d4",
-        "activityBarBadge.foreground": "#15202b",
-        "sash.hoverBorder": "#93e6fc",
-        "statusBar.background": "#61dafb",
-        "statusBar.foreground": "#15202b",
-        "statusBarItem.hoverBackground": "#2fcefa",
-        "statusBarItem.remoteBackground": "#61dafb",
-        "statusBarItem.remoteForeground": "#15202b",
-        "titleBar.activeBackground": "#61dafb",
-        "titleBar.activeForeground": "#15202b",
-        "titleBar.inactiveBackground": "#61dafb99",
-        "titleBar.inactiveForeground": "#15202b99"
-    },
-    "peacock.color": "#61dafb",
-    "python.testing.pytestArgs": [
-        "tests"
-    ],
-    "python.testing.unittestEnabled": false,
-    "python.testing.pytestEnabled": true
+  "workbench.colorCustomizations": {
+    "activityBar.activeBackground": "#93e6fc",
+    "activityBar.activeBorder": "#fa45d4",
+    "activityBar.background": "#93e6fc",
+    "activityBar.foreground": "#15202b",
+    "activityBar.inactiveForeground": "#15202b99",
+    "activityBarBadge.background": "#fa45d4",
+    "activityBarBadge.foreground": "#15202b",
+    "sash.hoverBorder": "#93e6fc",
+    "statusBar.background": "#61dafb",
+    "statusBar.foreground": "#15202b",
+    "statusBarItem.hoverBackground": "#2fcefa",
+    "statusBarItem.remoteBackground": "#61dafb",
+    "statusBarItem.remoteForeground": "#15202b",
+    "titleBar.activeBackground": "#61dafb",
+    "titleBar.activeForeground": "#15202b",
+    "titleBar.inactiveBackground": "#61dafb99",
+    "titleBar.inactiveForeground": "#15202b99",
+    "commandCenter.border": "#15202b99"
+  },
+  "peacock.color": "#61dafb",
+  "python.testing.pytestArgs": ["tests"],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true,
+  "python.testing.cwd": "${workspaceFolder}",
+  "[python]": {
+    "editor.tabSize": 4,
+    "editor.insertSpaces": true,
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "ms-python.python",
+    "editor.codeActionsOnSave": {
+      "source.organizeImports": true
+    }
+  },
+  "python.linting.pylintPath": "${workspaceFolder}/.venv/bin/pylint",
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/.venv/lib/python3.11/site-packages",
+    "${workspaceFolder}/*/site-packages"
+  ],
+  "python.autoComplete.extraPaths": [
+    "${workspaceFolder}/.venv/lib/python3.11/site-packages",
+    "${workspaceFolder}/*/site-packages"
+  ],
+  "python.linting.enabled": true,
+  "python.linting.lintOnSave": true,
+  "python.analysis.typeCheckingMode": "basic",
+  "python.linting.pylintEnabled": true,
+  "python.linting.pylintArgs": ["--rcfile=${workspaceFolder}/.pylintrc"],
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.printWidth": 100,
+  "python.formatting.provider": "autopep8"
 }
