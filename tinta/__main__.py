@@ -19,4 +19,4 @@
 # Where a conflict or dispute would arise between these two licenses, HLv2.1
 # shall take precedence.
 
-import __init__ as tinta
+import __init__ as tinta  # pylint: disable=W0611,E0401

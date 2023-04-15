@@ -86,7 +86,7 @@ Tinta.discover()
 Tinta.discover(background=True)
 ```
 
-<img src="https://github.com/brandonscript/tinta/blob/main/examples/tinta-discover.png?raw=true" style="max-width: 540px;" alt="Tinta.discover() output, a set of ansi color-coded numbers in the terminal" />
+<img src="https://github.com/brandonscript/tinta/blob/main/examples/tinta-discover.png?raw=true" style="max-width: 540px; !important" width="540" alt="Tinta.discover() output, a set of ansi color-coded numbers in the terminal" />
 
 An example `colors.ini` file might look like:
 

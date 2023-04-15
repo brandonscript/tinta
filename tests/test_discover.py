@@ -1,6 +1,6 @@
 import pytest
 
-from tinta.discover import color_sets, is_dark
+from tinta.discover import color_sets, discover, is_dark
 
 
 class TestDiscover():
@@ -28,3 +28,11 @@ class TestDiscover():
 
         for c in light_colors:
             assert not is_dark(c)
+
+    def test_discover(self):
+
+        print("Testing discover()...")
+        discover(background=False)
+
+        print("Testing discover(background=True)...")
+        discover(background=True)

@@ -1,4 +1,8 @@
 {
+  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "prettier.printWidth": 100,
+  "editor.formatOnPaste": true,
+  "editor.formatOnSave": true,
   "workbench.colorCustomizations": {
     "activityBar.activeBackground": "#93e6fc",
     "activityBar.activeBorder": "#fa45d4",
@@ -24,32 +28,23 @@
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
   "python.testing.cwd": "${workspaceFolder}",
+  "python.linting.pylintPath": "${workspaceFolder}/.venv/bin/pylint",
+  "python.analysis.extraPaths": ["${workspaceFolder}/**/site-packages"],
+  "python.analysis.typeCheckingMode": "basic",
+  "python.autoComplete.extraPaths": ["${workspaceFolder}/**/site-packages"],
+  "python.linting.enabled": true,
+  "python.linting.lintOnSave": true,
+  "python.linting.pylintEnabled": true,
+  "python.linting.pylintArgs": ["--rcfile=${workspaceFolder}/.pylintrc"],
+  "python.formatting.provider": "autopep8",
+  "python.formatting.autopep8Path": "${workspaceFolder}/.venv/bin/autopep8",
   "[python]": {
     "editor.tabSize": 4,
     "editor.insertSpaces": true,
-    "editor.formatOnSave": true,
     "editor.defaultFormatter": "ms-python.python",
     "editor.codeActionsOnSave": {
-      "source.organizeImports": true
+      "source.organizeImports": true,
+      "source.fixAll": true
     }
-  },
-  "python.linting.pylintPath": "${workspaceFolder}/.venv/bin/pylint",
-  "python.analysis.extraPaths": [
-    "${workspaceFolder}/.venv/lib/python3.11/site-packages",
-    "${workspaceFolder}/*/site-packages"
-  ],
-  "python.autoComplete.extraPaths": [
-    "${workspaceFolder}/.venv/lib/python3.11/site-packages",
-    "${workspaceFolder}/*/site-packages"
-  ],
-  "python.linting.enabled": true,
-  "python.linting.lintOnSave": true,
-  "python.analysis.typeCheckingMode": "basic",
-  "python.linting.pylintEnabled": true,
-  "python.linting.pylintArgs": ["--rcfile=${workspaceFolder}/.pylintrc"],
-  "editor.formatOnPaste": true,
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
-  "prettier.printWidth": 100,
-  "python.formatting.provider": "autopep8"
+  }
 }

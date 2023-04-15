@@ -1,0 +1,7 @@
+[MAIN]
+disable=
+    too-many-instance-attributes,
+    too-few-public-methods,
+    no-else-return,
+    too-many-arguments,
+    missing-docstring,
