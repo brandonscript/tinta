@@ -51,8 +51,12 @@ Borrowing design from https://github.com/fidian/ansi
                 244   245   246   247   248   249   250   251   252   253   254   255
 """
 
-import itertools
-from typing import Iterable, List, Literal, TypeVar, Union
+from typing import Iterable, List, TypeVar, Union
+
+try:
+    from typing import Literal
+except ImportError:
+    from typing_extensions import Literal
 
 color_sets = {
     'standard': [0, 1, 2, 3, 4, 5, 6, 7],
