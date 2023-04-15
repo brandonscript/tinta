@@ -5,7 +5,7 @@
 
 Tinta is a magical console output tool with support for printing in beautiful colors and with rich formatting, like bold and underline, using static, chain-able methods. It's so pretty, it's almost like a unicorn!
 
-![version](https://img.shields.io/badge/version-0.1.4--alpha-green.svg) [![Build Status](https://travis-ci.com/brandonscript/tinta.svg?branch=main)](https://travis-ci.com/brandonscript/tinta) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=brandonscript/tinta&amp;utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) [![MIT License](https://img.shields.io/apm/l/atomic-design-ui.svg?)](https://github.com/tterb/atomic-design-ui/blob/master/LICENSEs) [![](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162)](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](code_of_conduct.md)
+![version](https://img.shields.io/badge/version-0.1.5--beta-green.svg) [![GitHub Actions Badge](https://img.shields.io/github/actions/workflow/status/brandonscript/tinta/run-tests.yml)](https://github.com/brandonscript/tinta/actions) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=brandonscript/tinta&amp;utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) ![MIT License](https://img.shields.io/github/license/brandonscript/tinta) [![](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162)](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](code_of_conduct.md)
 
 ## Features and Tinta Basics
 
@@ -63,6 +63,8 @@ Install Tinta:
 pip install tinta
 ```
 
+(Or visit https://pypi.org/project/tinta/)
+
 Add Tinta to your project, and optionally configure a path to your `colors.ini` file. This path can be relative, or absolute; the best way to make a path is using `pathlib.Path()`.
 
 ```python
@@ -76,11 +78,15 @@ from tinta import Tinta
 Tinta.load_colors(Path().cwd() / 'config/colors.ini')
 ```
 
-To discover what colors are available on your console:
+You can use `Tinta.discover()` to discover what colors are available on your console.
 
 ```python
 Tinta.discover()
+# or 
+Tinta.discover(background=True)
 ```
+
+<img src="https://github.com/brandonscript/tinta/blob/main/examples/tinta-discover.png?raw=true" style="max-width: 540px;" alt="Tinta.discover() output, a set of ansi color-coded numbers in the terminal" />
 
 An example `colors.ini` file might look like:
 
@@ -91,6 +97,9 @@ red: 1
 blue: 32
 yellow: 214
 ```
+
+(Or modify the Tinta colors.ini from [here](https://github.com/brandonscript/tinta/blob/main/tinta/colors.ini))
+
 ## API Reference
 
 ### Tinta (+ color methods)
@@ -145,6 +154,7 @@ All `Tinta` and dynamic color methods will make available the following attribut
  - `code() -> self` – Adds segments using the specified ansi code.
  - `normal() -> self` – Resets the style to default.
  - `reset() -> self` – Resets both style and color to default.
+ - `discover()` – Prints a list of available colors to the console.
 
 All style methods support the same arguments as `Tinta` and dynamic color methods:
 
@@ -233,12 +243,7 @@ Sometimes it's useful to globally configure `Tinta` on a system where you might 
 To run tests, run the following command:
 
 ```bash
-pip install -r requirements-text.txt
-```
-
-then simply:
-
-```bash
+pip install pytest
 python -m pytest -xv
 ```
 
