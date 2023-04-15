@@ -8,13 +8,17 @@
 # You can also reference a tag or branch, but the action may change without warning.
 
 name: Publish Tinta to PyPI
-
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  
 on:
   release:
     types: [published]
 
   workflow_dispatch:
-    
+
 
 jobs:
   deploy:

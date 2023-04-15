@@ -30,7 +30,7 @@ with Path('README.md').open(encoding='utf-8') as f:
 
 setup(name='tinta',
       version='0.1.5b1',
-      description='Tinta, the a magical console output tool.',
+      description='Tinta, a magical console output tool.',
       long_description=long_description,
       long_description_content_type='text/markdown',
       url='http://github.com/brandonscript/tinta',
