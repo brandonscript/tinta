@@ -161,3 +161,39 @@ class TestComplexStructure:
                 == "A cat is a human's best friend")
         assert Tinta(
             f"A {Tinta().red('hologram').text()} is a human's best friend")
+
+    def test_add(self):
+        t = Tinta().add('How long').add('can two people talk about nothing?')
+        assert t.plaintext() == 'How long can two people talk about nothing?'
+
+        assert len(t.parts) == 2
+        assert len(t.parts_formatted) == 2
+        assert len(t.parts_plaintext) == 2
+
+        t = Tinta().add('How long', 'can two people talk about nothing?')
+        assert t.plaintext() == 'How long can two people talk about nothing?'
+
+        assert len(t.parts) == 1
+        assert len(t.parts_formatted) == 1
+        assert len(t.parts_plaintext) == 1
+
+    def test_remove(self):
+        t = Tinta().add('How long').add('can two people talk about nothing?')
+        t.remove()
+        assert t.plaintext() == 'How long'
+        assert len(t.parts) == 1
+        assert len(t.parts_formatted) == 1
+        assert len(t.parts_plaintext) == 1
+
+        t = Tinta()
+        for p in range(10):
+            t.add(str(p))
+
+        assert len(t.parts) == 10
+        t.remove(10)
+
+        assert len(t.parts) == 0
+
+        t.remove(2) # Shouldn't error if we remove more than we have
+
+        assert len(t.parts) == 0

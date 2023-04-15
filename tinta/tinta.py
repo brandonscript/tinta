@@ -210,6 +210,41 @@ class Tinta(object):
 
         return self
 
+    def remove(self, qty: int = 1) -> 'Tinta':
+        """Removes the last 'qty' segments from this Tinta instance
+
+        Args:
+            qty (int, optional): Number of segments to remove. Defaults to 1.
+
+        Returns:
+            self
+        """
+        for _ in range(min(qty, len(self.parts))):
+            self.parts.pop()
+        return self
+
+    def tint(self, *s, color_name: str = 'white', sep=None) -> 'Tinta':
+        """Adds segments of text colored with the specified color.
+        Can be used in place of calling named color methods.
+
+        Args:
+            *s: Segments of text to add.
+            color (str, optional): A color name. Defaults to 'white'.
+            sep (str, optional): Used to join strings. Defaults to ' '.
+
+        Returns:
+            self
+        """
+
+        # Check if color_name is a valid color
+        if not hasattr(self.colors, color_name):
+            raise AttributeError(
+                f'Invalid color name: {color_name}. Is it in colors.ini?')
+
+        self.color = color_name
+        self.add(*s, sep=self._sep(sep))
+        return self
+
     def code(self, *s, code: int = 0, sep=None) -> 'Tinta':
         """Adds segments of text colored with the specified ANSI code.
 
