@@ -29,7 +29,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Optional
+from typing import Optional, Union
 
 from colors import color
 
@@ -309,7 +309,7 @@ class Tinta(object):
         self.add(*s, sep=self._sep(sep))
         return self
 
-    def _sep(self, sep=None) -> str:
+    def _sep(self, sep=None) -> Union[str, None]:
         """Returns an appropriate separator for the given sep arg.
 
         Args:
@@ -325,7 +325,7 @@ class Tinta(object):
                 sep = ' '
         else:
             sep = sep
-        return sep or ' '
+        return sep
 
     def print(self, sep=None, end='\n', file=sys.stdout,
               flush=False, plaintext=False, force=False):
