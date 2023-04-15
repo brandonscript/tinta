@@ -163,7 +163,7 @@ def colorbox(code: int, text_only: bool = False) -> str:
         return f'\033[0m\033[48;5;{code}m\033[38;5;{text_color}m{text}\033[0m'
 
 
-def discover(background: bool = True):
+def discover(background: bool = False):
     """Prints all 256 colors in a matrix on your system."""
 
     print("Standard: ", end='')

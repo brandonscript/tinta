@@ -33,6 +33,8 @@ from typing import Optional, Union
 
 from colors import color
 
+from tinta.discover import discover
+
 config = configparser.ConfigParser()
 
 
@@ -362,16 +364,10 @@ class Tinta(object):
         print('\033[0m', end='')
 
     @staticmethod
-    def discover(text_only=False):
-        """Prints all 256 colors in a matrix on your system. If text_only is True,
-        it will print numbers in their colors instead of background colors."""
-        print('\n')
-        for i in range(0, 16):
-            for j in range(0, 16):
-                code = str(i * 16 + j)
-                sys.stdout.write(
-                    u"\u001b[38;5;" + code + "m " + code.ljust(4))
-            print(u"\u001b[0m")
+    def discover(background=False):
+        """Prints all 256 colors in a matrix on your system. If background is True,
+        it will print background colors with numbers on top."""
+        discover(background)
 
     @staticmethod
     def clearline():
