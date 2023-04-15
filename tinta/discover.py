@@ -147,7 +147,7 @@ def is_dark(code: int) -> bool:
     return code in dark_colors
 
 
-def colorbox(code: int, text_only: bool = False) -> str:
+def colorbox(code: int, background: bool = False) -> str:
     """Returns a padded, styled box for the given color. If the color is 
     too dark, the text is white, otherwise dark grey.
     """
@@ -157,10 +157,10 @@ def colorbox(code: int, text_only: bool = False) -> str:
 
     text = f"{str(code).rjust(4)} "
 
-    if text_only:
-        return f'\033[0m\033[38;5;{code}m{text}\033[0m'
-    else:
+    if background:
         return f'\033[0m\033[48;5;{code}m\033[38;5;{text_color}m{text}\033[0m'
+    else:
+        return f'\033[0m\033[38;5;{code}m{text}\033[0m'
 
 
 def discover(background: bool = False):
