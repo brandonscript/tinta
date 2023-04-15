@@ -99,6 +99,10 @@ class TestEdgeCases:
     def test_missing_color(self):
         Tinta().sparkle().print()
 
+    @pytest.mark.xfail()
+    def test_color_same_as_builtin_method(self):
+        Tinta().load_colors('tests/test_colors_invalid.ini')
+
     def test_print_empty(self):
         Tinta().print()
 

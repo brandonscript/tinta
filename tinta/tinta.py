@@ -390,7 +390,16 @@ class Tinta(object):
 
     @classmethod
     def load_colors(cls, path):
-        cls.colors = cls._AnsiColors(path)
+        loaded_colors = cls._AnsiColors(path)
+
+        # Check if any of the color names loaded match the built-in methods. If so, raise an error.
+        for col in loaded_colors.list_colors():
+            if hasattr(cls, col):
+                raise AttributeError(
+                    f"Cannot overwrite built-in method '{col}' with color name. Please rename the color in '{path}'.")
+
+        # Add the loaded colors to the Tinta class
+        cls.colors = loaded_colors
 
     class Part:
         """A segment part of text, intended to be joined together
