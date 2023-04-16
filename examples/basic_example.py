@@ -27,11 +27,13 @@ been installed via pip into the correct modules dir.
 import sys
 import time
 from pathlib import Path
-sys.path.append(str(Path().cwd().parent / 'tinta'))
-"""End import shim
-"""
 
-from tinta import Tinta
+sys.path.append(str(Path().cwd().parent / 'tinta'))
+# pylint: disable=wrong-import-position, wrong-import-order, import-error
+from tinta import Tinta  # noqa: E402
+
+# End import shim
+
 Tinta.load_colors('examples/colors.ini')
 
 # The most basic example we can get.
@@ -41,7 +43,8 @@ Tinta("That's a really nice car!").print()
 Tinta().red("That's a really nice red car!").print()
 
 # Prints the first half in blue, then the rest in red.
-Tinta().blue("That's a cool blue car").red("but not as cool as my red one").print()
+Tinta().blue("That's a cool blue car").red(
+    "but not as cool as my red one").print()
 
 # Prints the first few words in green, separated by _*_,
 # then the final word in purple.
@@ -55,8 +58,8 @@ Tinta().gray("It's").underline("really").normal(
 
 # Here we tried to print in pink, but used the plaintext arg in print.
 # You'll notice we still support Python's multiline \ feature.
-Tinta().pink("But it's equally important to be able " \
-    "to print things in plaintext, too").print(plaintext=True)
+Tinta().pink("But it's equally important to be able "
+             "to print things in plaintext, too").print(plaintext=True)
 
 # Let's try some f-strings.
 animal = 'Tiger'
@@ -98,26 +101,26 @@ Tinta().code('Did you know, you can',
              'write with ansi codes directly, too?', code=127).print()
 
 # Have some fun with separators.
-Tinta('A bird', 'I like birds', sep='; ').add('And also cats', 'and dogs', sep=' ').print(sep='\n')
+Tinta('A bird', 'I like birds', sep='; ').add(
+    'And also cats', 'and dogs', sep=' ').print(sep='\n')
 
 # You could get really fancy and inject some formatted text in the middle,
 # using f-strings.
 (Tinta().mint('Fate.')
-       .dark_gray('It protects')
-       .underline().blue(
-           f"fools{Tinta().normal().dark_gray(',').text()}",
-           sep=''
-        )
-       .normal().pink('little children,')
-       .dark_gray('and ships named')
-       .purple("Enterprise.").print())
+ .dark_gray('It protects')
+ .underline().blue(
+    f"fools{Tinta().normal().dark_gray(',').text()}",
+    sep=''
+)
+    .normal().pink('little children,')
+    .dark_gray('and ships named')
+    .purple("Enterprise.").print())
 
 # Tinta is also smart about how we join things together. If you join
 # several objects together, it collapses repeated whitespace. You
 # can also use 'sep' to force sections to collapse.
 t = Tinta().pink('A section').add().white().blue(
     'of text', sep='').green(',').add().purple('separated.')
-print(t.parts)
 t.print()
 
 # And finally, you can use some helper tools to clear the current
