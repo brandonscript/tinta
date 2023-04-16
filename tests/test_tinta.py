@@ -21,20 +21,8 @@
 
 import pytest
 
+# pylint: disable=import-error
 from tinta import Tinta
-
-"""Begin import shim
-Adds the tinta path so we can load the module directly. You won't
-need to do this in your project, because the package will have
-been installed via pip into the correct modules dir.
-"""
-import sys
-from pathlib import Path
-
-sys.path.append(str(Path().cwd().parent / 'tinta'))
-
-"""End import shim
-"""
 
 Tinta.load_colors('examples/colors.ini')
 
@@ -194,6 +182,6 @@ class TestComplexStructure:
 
         assert len(t.parts) == 0
 
-        t.remove(2) # Shouldn't error if we remove more than we have
+        t.remove(2)  # Shouldn't error if we remove more than we have
 
         assert len(t.parts) == 0

@@ -1,3 +1,4 @@
+# pylint: disable=import-error
 from tinta.discover import color_sets, discover, flatten, is_dark
 
 
