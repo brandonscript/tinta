@@ -33,6 +33,7 @@ rm -rf $ROOT/build
 pip install --upgrade pip &> /dev/null
 pip install twine hatchling setuptools wheel &> /dev/null
 
+twine check dist/*
 hatchling build
 if [ "$TEST" = true ]; then
     python3 -m twine upload --repository-url https://test.pypi.org/legacy/ --username $USERNAME --password $PASSWORD dist/*

@@ -3,34 +3,28 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
-        {
-            "label": "twine",
-            "type": "shell",
-            "command": "rm -rf dist; python setup.py sdist bdist_wheel; twine check dist/*",
-            "problemMatcher": [],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "deploy-test",
-            "type": "shell",
-            "command": "rm -rf dist; python setup.py sdist bdist_wheel; twine check dist/*; twine upload --repository testpypi dist/*",
-            "group": "build",
-            "problemMatcher": []
-        },
-        {
-            "label": "deploy-prod",
-            "type": "shell",
-            "command": "rm -rf dist; python setup.py sdist bdist_wheel; twine check dist/*; twine upload dist/*",
-            "group": "build"
-        },
-        {
-            "label": "run-example",
-            "type": "shell",
-            "command": "python examples/basic_usage.py",
-            "group": "build"
+      {
+        "label": "Build",
+        "type": "shell",
+        "command": "rm -rf dist; hatchling build; twine check dist/*",
+        "problemMatcher": [],
+        "group": {
+          "kind": "build",
+          "isDefault": true
         }
+      },
+      {
+        "label": "Publish [Test]",
+        "type": "shell",
+        "command": "./publish.sh --test",
+        "group": "build",
+        "problemMatcher": []
+      },
+      {
+        "label": "Publish [Prod]",
+        "type": "shell",
+        "command": "./publish.sh",
+        "group": "build"
+      }
     ]
 }
