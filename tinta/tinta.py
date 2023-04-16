@@ -157,6 +157,14 @@ class Tinta(object):
             str: A list of plaintext strings."""
         return [part.pln for part in self.parts]
 
+    @property
+    def parts_esc(self) -> list:
+        """Returns a list of escaped formatted string parts
+
+        Returns:
+            str: A list of esc strings."""
+        return [part.esc for part in self.parts]
+
     def plaintext(self, sep=None) -> str:
         """Returns a compiled plaintext string, joined by 'sep'.
 
@@ -223,25 +231,33 @@ class Tinta(object):
             self.parts.pop()
         return self
 
-    def tint(self, *s, color_name: str = 'white', sep=None) -> 'Tinta':
+    # pylint: disable=redefined-outer-name
+    def tint(self, *s, color: Optional[str] = None, sep=None) -> 'Tinta':
         """Adds segments of text colored with the specified color.
         Can be used in place of calling named color methods.
-
+        
         Args:
             *s: Segments of text to add.
-            color (str, optional): A color name. Defaults to 'white'.
+            color (str, optional): A color name. Defaults to first argument.
             sep (str, optional): Used to join strings. Defaults to ' '.
 
         Returns:
             self
         """
 
-        # Check if color_name is a valid color
-        if not hasattr(self.colors, color_name):
-            raise AttributeError(
-                f'Invalid color name: {color_name}. Is it in colors.ini?')
+        if not color:
+            if not len(s) > 1:
+                raise AttributeError(
+                    'If no color is specified, tint() requires at least two arguments.')
 
-        self.color = color_name
+            color = s[0]
+            s = s[1:]
+        # Check if color_name is a valid color
+        if not hasattr(self.colors, color):  # type: ignore
+            raise AttributeError(
+                f'Invalid color name: {color}. Is it in colors.ini?')
+
+        self.color = color
         self.add(*s, sep=self._sep(sep))
         return self
 
@@ -313,7 +329,7 @@ class Tinta(object):
             self
         """
         self.style = []
-        self._prefixes.append('\033[24m\033[21m')
+        # self._prefixes.append('\033[24m\033[21m')
         self.add(*s, sep=self._sep(sep))
         return self
 
@@ -396,7 +412,7 @@ class Tinta(object):
 
         self.reset()
         self.parts = []
-        print('\033[0m', end='')
+        print('\033[0m', end='', file=file, flush=flush)
 
     @staticmethod
     def discover(background=False):
@@ -431,7 +447,8 @@ class Tinta(object):
         for col in loaded_colors.list_colors():
             if hasattr(cls, col):
                 raise AttributeError(
-                    f"Cannot overwrite built-in method '{col}' with color name. Please rename the color in '{path}'.")
+                    f"Cannot overwrite built-in method '\
+                        {col}' with color name. Please rename the color in '{path}'.")
 
         # Add the loaded colors to the Tinta class
         cls.colors = loaded_colors
@@ -451,12 +468,24 @@ class Tinta(object):
             self.pln = pln
             self.sep = sep
 
+        def __str__(self):
+            return self.fmt
+
+        def __repr__(self):
+            return self.__str__()
+
+        @property
+        def esc(self):
+            return esc(self.fmt)
+
     class _AnsiColors:
 
         """Color builder for Tinta's console output.
 
         ANSI color map for console output. Get a list of colors here =
         http://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#256-colors
+
+        Or run Tinta.discover() to see all 256 colors on your system.
 
         You can change the colors the terminal outputs by changing the
         ANSI values in colors.ini.
@@ -473,10 +502,24 @@ class Tinta(object):
             for k, v in config['colors'].items():
                 self.__setattr__(k, int(v))
 
+        def list_colors(self):
+            """Returns a list of all colors in the colors.ini file.
+            """
+            return list(config['colors'].keys())
+
 
 Tinta.colors = Tinta._AnsiColors()
 
 
-def to_plaintext(*s):
-    ansi_escape = re.compile(r'\x1b\[(K|.*?m)', re.I)
-    return [re.sub(ansi_escape, '', x) for x in s]
+def escape_ansi(line):
+    ansi_escape = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
+    return ansi_escape.sub('', line)
+
+
+def esc(string: str, replace: bool = False) -> str:
+    """Returns the raw representation of a string. If replace is true, 
+    replace a double backslash with a single backslash."""
+    r = repr(string)[1:-1]  # Strip the quotes from representation
+    if replace:
+        r = r.replace('\\\\', '\\')
+    return r

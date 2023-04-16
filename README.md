@@ -53,11 +53,12 @@ t.mint("Enterprise.").print()
 Glad you asked! Here are some pretty pictures:
 
 <img width="600" alt="Unicorns" src="https://user-images.githubusercontent.com/1480253/118717080-70e8f180-b7da-11eb-8ce8-08fe837fe73f.png">
+
 <img width="600" alt="Starbase" src="https://user-images.githubusercontent.com/1480253/118717091-734b4b80-b7da-11eb-9ecc-5cae5888878b.png">
 
 ## Installation and Getting Started
 
-Install Tinta:
+#### Install Tinta
 
 ```bash
 pip install tinta
@@ -65,28 +66,15 @@ pip install tinta
 
 (Or visit https://pypi.org/project/tinta/)
 
-Add Tinta to your project, and optionally configure a path to your `colors.ini` file. This path can be relative, or absolute; the best way to make a path is using `pathlib.Path()`.
+#### Add Tinta to your project
 
 ```python
 from tinta import Tinta
 
-# or to specify your custom colors,
-# relative to your project's cwd:
-
-from pathlib import Path
-from tinta import Tinta
-Tinta.load_colors(Path().cwd() / 'config/colors.ini')
+Tinta('Elementary, my dear!').print()
 ```
 
-You can use `Tinta.discover()` to discover what colors are available on your console.
-
-```python
-Tinta.discover()
-# or 
-Tinta.discover(background=True)
-```
-
-<img src="https://github.com/brandonscript/tinta/blob/main/examples/tinta-discover.png?raw=true" style="max-width: 540px; !important" width="540" alt="Tinta.discover() output, a set of ansi color-coded numbers in the terminal" />
+#### Create a `colors.ini` file
 
 An example `colors.ini` file might look like:
 
@@ -98,7 +86,64 @@ blue: 32
 yellow: 214
 ```
 
-(Or modify the Tinta colors.ini from [here](https://github.com/brandonscript/tinta/blob/main/tinta/colors.ini))
+Or modify the Tinta colors.ini from [here](https://github.com/brandonscript/tinta/blob/main/tinta/colors.ini).
+
+You can configure a path to your `colors.ini` file. This path can be relative, or absolute; the best way to make a path is using `pathlib.Path()`.
+
+```python
+from pathlib import Path
+from tinta import Tinta
+Tinta.load_colors(Path().cwd() / 'config/colors.ini')
+```
+
+#### Customizing your colors
+
+You can use `Tinta.discover()` to discover what colors are available on your console.
+
+```python
+Tinta.discover()
+# or to show the colors in the background
+Tinta.discover(background=True)
+```
+
+<img src="https://github.com/brandonscript/tinta/blob/main/examples/tinta-discover.png?raw=true" style="max-width: 540px; !important" width="540" alt="Tinta.discover() output, a set of ansi color-coded numbers in the terminal" />
+
+#### Using Tinta
+
+```python
+from tinta import Tinta
+
+Tinta('Unicorns are soft').print()
+# prints: Unicorns are soft in plain text
+
+Tinta('Unicorns are soft').pink().print()
+# prints: Unicorns are soft in pink
+
+Tinta('Unicorns are soft').pink().bold().print()
+# prints: Unicorns are soft in bold pink
+
+# You can chain as many methods as you want, and you can instantiate a single Tinta object
+t = Tinta()
+t.pink('Unicorns are soft, and').bold('very').normal('kind.')
+t.print()
+Tinta().pink('Unicorns are soft, and').bold('very').normal('kind.').print()
+# prints: Unicorns are soft, and very kind.
+#         [--------pink--------][bold][normal]
+
+# Notice how spaces are preserved between segments?
+# You can change this with the sep arg:
+Tinta().pink('Unicorns are soft, and', sep="").bold('very').normal('kind.').print()
+# prints: Unicorns are soft,andvery kind.
+```
+
+You can run the examples in the `examples/` directory to see more:
+
+```bash
+# check out the repo
+git clone https://github.com/brandonscript/tinta.git
+cd tinta
+python examples/basic_example.py
+```
 
 ## API Reference
 
@@ -116,6 +161,17 @@ Tinta().wine()
 Tinta().my_color()
 # etc.
 ```
+
+A note on linters like Pylance or pylint: these methods are dynamically generated, so they won't be recognized by your linter. Until Python natively supports type definitions for dynamically generated code, you will have to suppress these warnings:
+
+```python
+# pyright: reportGeneralTypeIssues=false
+Tinta().green() # or
+# pylint: disable=no-member
+Tinta().green() 
+```
+
+If this is frustrating, you can always use the `Tinta.code(<int>)` or the `Tinta.tint(<color>)` methods, which are not dynamically generated.
 
 #### Args
 
