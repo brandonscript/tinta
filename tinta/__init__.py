@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Tinta
-# Copyright 2023 github.com/brandoncript
+# Copyright 2024 github.com/brandoncript
 
 # This program is bound to the Hippocratic License 2.1
 # Full text is available here:
@@ -26,7 +26,8 @@ __version__ = "0.1.5b3"
 logger = getLogger(__name__)
 
 try:
-    from .tinta import Tinta
+    from tinta.tinta import Tinta
+    assert Tinta
 except ImportError as e:
     logger.warning(e)
     raise e

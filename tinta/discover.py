@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Tinta
-# Copyright 2023 github.com/brandoncript
+# Copyright 2024 github.com/brandoncript
 
 # This program is bound to the Hippocratic License 2.1
 # Full text is available here:
@@ -57,7 +57,7 @@ from typing import List, TypeVar, Union
 try:
     from typing import Literal
 except ImportError:
-    from typing_extensions import Literal
+    from typing import Literal
 
 color_sets = {
     'standard': [0, 1, 2, 3, 4, 5, 6, 7],

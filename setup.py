@@ -2,7 +2,7 @@
 
 """
 # Tinta
-# Copyright 2023 github.com/brandoncript
+# Copyright 2024 github.com/brandoncript
 
 # This program is bound to the Hippocratic License 2.1
 # Full text is available here:
@@ -29,7 +29,7 @@ with Path('README.md').open(encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='tinta',
-      version='0.1.5b3',
+      version='0.1.6',
       description='Tinta, a magical console output tool.',
       long_description=long_description,
       long_description_content_type='text/markdown',
@@ -43,7 +43,7 @@ setup(name='tinta',
       keywords='console colors ansi print terminal development',
       python_requires='>=3.6',
       classifiers=[
-          'Development Status :: 4 - Beta',
+          'Development Status :: 5 - Production/Stable',
           'Intended Audience :: Developers',
           'Environment :: Console',
           'Topic :: Utilities',
@@ -53,6 +53,8 @@ setup(name='tinta',
           'Programming Language :: Python :: 3.8',
           'Programming Language :: Python :: 3.9',
           'Programming Language :: Python :: 3.10',
-          'Programming Language :: Python :: 3.11'
+          'Programming Language :: Python :: 3.11',
+          'Programming Language :: Python :: 3.12',
+          'Programming Language :: Python :: 3.13',
       ],
       zip_safe=False)

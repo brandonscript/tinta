@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Tinta
-# Copyright 2023 github.com/brandoncript
+# Copyright 2024 github.com/brandoncript
 
 # This program is bound to the Hippocratic License 2.1
 # Full text is available here:

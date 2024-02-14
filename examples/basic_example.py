@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Tinta
-# Copyright 2023 github.com/brandoncript
+# Copyright 2024 github.com/brandoncript
 
 # This program is bound to the Hippocratic License 2.1
 # Full text is available here:
@@ -30,7 +30,7 @@ from pathlib import Path
 
 sys.path.append(str(Path().cwd().parent / 'tinta'))
 # pylint: disable=wrong-import-position, wrong-import-order, import-error
-from src import Tinta  # noqa: E402
+from tinta import Tinta  # noqa: E402
 
 # End import shim
 
