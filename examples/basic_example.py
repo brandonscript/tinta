@@ -30,7 +30,7 @@ from pathlib import Path
 
 sys.path.append(str(Path().cwd().parent / 'tinta'))
 # pylint: disable=wrong-import-position, wrong-import-order, import-error
-from tinta import Tinta  # noqa: E402
+from src import Tinta  # noqa: E402
 
 # End import shim
 
@@ -71,7 +71,7 @@ Tinta().blue("We can").dim("dim").normal("things").print()
 # Things getting out of hand? You can break them up easily in multiple
 # lines, without having to fiddle with \.
 tint = Tinta()
-tint.add('Sometimes we need to')
+tint.push('Sometimes we need to')
 tint.pink('break up long lines of text')
 tint.gray('to make them easier to read.')
 tint.line('We can even write to a new line!')
@@ -87,7 +87,7 @@ Tinta().vanilla('I like ice cream',
 
 # When you're done printing, Tinta resets itself, but you can still
 # reuse the original variable.
-tint.add('After a print, Tinta resets itself').green()
+tint.push('After a print, Tinta resets itself').green()
 tint.line('but you can still use the same initialized version.')
 tint.print()
 
@@ -101,7 +101,7 @@ Tinta().code('Did you know, you can',
              'write with ansi codes directly, too?', code=127).print()
 
 # Have some fun with separators.
-Tinta('A bird', 'I like birds', sep='; ').add(
+Tinta('A bird', 'I like birds', sep='; ').push(
     'And also cats', 'and dogs', sep=' ').print(sep='\n')
 
 # You could get really fancy and inject some formatted text in the middle,
@@ -109,7 +109,7 @@ Tinta('A bird', 'I like birds', sep='; ').add(
 (Tinta().mint('Fate.')
  .dark_gray('It protects')
  .underline().blue(
-    f"fools{Tinta().normal().dark_gray(',').text()}",
+    f"fools{Tinta().normal().dark_gray(',').get_str()}",
     sep=''
 )
     .normal().pink('little children,')
@@ -119,8 +119,8 @@ Tinta('A bird', 'I like birds', sep='; ').add(
 # Tinta is also smart about how we join things together. If you join
 # several objects together, it collapses repeated whitespace. You
 # can also use 'sep' to force sections to collapse.
-t = Tinta().pink('A section').add().white().blue(
-    'of text', sep='').green(',').add().purple('separated.')
+t = Tinta().pink('A section').push().white().blue(
+    'of text', sep='').green(',').push().purple('separated.')
 t.print()
 
 # And finally, you can use some helper tools to clear the current

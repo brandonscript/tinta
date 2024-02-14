@@ -23,34 +23,34 @@
 name = "tinta"
 version = "0.1.5b3"
 description = "Tinta, a magical console output tool."
- authors = [
-  { name="Brandon Shelley", email="brandon@pacificaviator.co" },
-]
+authors = [{ name = "Brandon Shelley", email = "brandon@pacificaviator.co" }]
 license = "MIT"
 readme = "README.md"
 keywords = ["console", "colors", "ansi", "print", "terminal", "development"]
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Intended Audience :: Developers",
-    "Environment :: Console",
-    "Topic :: Utilities",
-    "License :: OSI Approved :: MIT License",
-    "Programming Language :: Python :: 3.6",
-    "Programming Language :: Python :: 3.7",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11"
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Environment :: Console",
+  "Topic :: Utilities",
+  "License :: OSI Approved :: MIT License",
+  "Programming Language :: Python :: 3.6",
+  "Programming Language :: Python :: 3.7",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
 ]
 
 [project.urls]
-homepage = "https://github.com/brandonscript/tinta" 
+homepage = "https://github.com/brandonscript/tinta"
 repository = "https://github.com/brandonscript/tinta"
 
 [tool.hatchling]
 
 [tool.hatchling.dependencies]
-python = "^3.6"
+python = "^3.11"
 ansicolors = "^1.1.8"
 
 [tool.hatchling.dev-dependencies]
@@ -62,7 +62,91 @@ wheel = "^0.36.2"
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
-[tool.pytest.ini_options]
-pythonpath = [
-  "../tinta",
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+explicit_package_bases = true
+ignore_missing_imports = true
+check_untyped_defs = true
+
+[tool.mypy-applications]
+ignore_missing_imports = false
+
+[tool.mypy-common]
+ignore_missing_imports = false
+check_untyped_defs = true
+
+[tool.black]
+target-version = ['py311']
+preview = true
+
+[tool.isort]
+profile = "black"
+order_by_type = false
+combine_as_imports = true
+case_sensitive = false
+skip_magic_trailing_comma = true
+force_sort_within_sections = false
+
+[tool.pyright]
+# verboseOutput = true
+pythonVersion = "3.11"
+extraPaths = [".venv/lib/python3.11/site-packages", "tinta", "**/*.py"]
+reportUnusedImport = "error"
+reportUnusedClass = "error"
+reportUnusedFunction = "error"
+reportUnusedVariable = "error"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+indent-width = 4
+preview = true
+
+[tool.ruff.lint]
+fixable = ["ALL"]
+select = [
+  # PRAGMA: F401 is for unused imports, you may want to remove this when developing so you can comment/uncomment code.
+  "F401",
+  "W292",
+  "W293",
+  "W191",
+  "E101",
+  "E112",
+  "E117",
+  "I002",
+  "UP035",
 ]
+# To add, when supported by ruff: "W503", "E203"
+# see: https://github.com/astral-sh/ruff/issues/2402
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402", "F401"]
+
+[tool.ruff.lint.isort]
+force-sort-within-sections = false
+case-sensitive = false
+combine-as-imports = true
+force-wrap-aliases = true
+order-by-type = false
+
+[tool.ruff.format]
+indent-style = "space"
+line-ending = "auto"
+skip-magic-trailing-comma = false
+quote-style = "double"
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+minversion = "7.4"
+addopts = "-vv"
+filterwarnings = [
+  # supress warnings triggered by ray internally
+  'ignore:pkg_resources is deprecated:DeprecationWarning',
+  'ignore:Deprecated call to `pkg_resources:DeprecationWarning',
+]
+testpaths = ["tests"]
+python_files = ["*_test.py", "test_*.py"]
+python_classes = ["test_", "_test", "Test*"]
+python_functions = ["test_", "_test"]

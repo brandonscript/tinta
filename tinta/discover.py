@@ -51,7 +51,8 @@ Borrowing design from https://github.com/fidian/ansi
                 244   245   246   247   248   249   250   251   252   253   254   255
 """
 
-from typing import Iterable, List, TypeVar, Union
+from collections.abc import Iterable
+from typing import List, TypeVar, Union
 
 try:
     from typing import Literal

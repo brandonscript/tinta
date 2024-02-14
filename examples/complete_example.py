@@ -29,7 +29,7 @@ from pathlib import Path
 
 sys.path.append(str(Path().cwd().parent / 'tinta'))
 # pylint: disable=wrong-import-position, wrong-import-order, import-error
-from tinta import Tinta  # noqa: E402
+from src import Tinta  # noqa: E402
 
 # End import shim
 

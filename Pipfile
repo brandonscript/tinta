@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-ansicolors = ">=1.1.8"
+ansicolors = "==1.1.8"
 
 [dev-packages]
 pipenv = "*"
@@ -12,6 +12,9 @@ pylint = "*"
 autopep8 = "*"
 pytest = "*"
 pytest-cov = "*"
+ruff = "*"
+black = "*"
+mypy = "*"
 
 [requires]
 python_version = "3.11"
