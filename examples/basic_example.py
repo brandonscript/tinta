@@ -109,7 +109,7 @@ Tinta('A bird', 'I like birds', sep='; ').push(
 (Tinta().mint('Fate.')
  .dark_gray('It protects')
  .underline().blue(
-    f"fools{Tinta().normal().dark_gray(',').get_str()}",
+    f"fools{Tinta().normal().dark_gray(',').to_str()}",
     sep=''
 )
     .normal().pink('little children,')

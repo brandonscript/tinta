@@ -27,7 +27,7 @@ logger = getLogger(__name__)
 
 try:
     from tinta.tinta import Tinta
-    assert Tinta
+    assert bool(Tinta)
 except ImportError as e:
     logger.warning(e)
     raise e

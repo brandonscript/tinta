@@ -109,28 +109,28 @@ class TestComplexStructure:
     def test_join(self):
         t = Tinta().push('How long').push('can two people talk about nothing?')
         assert t.get_plaintext() == 'How long can two people talk about nothing?'
-        assert t.get_str(plaintext=True) == 'How long can two people talk about nothing?'
+        assert t.to_str(plaintext=True) == 'How long can two people talk about nothing?'
 
         t = Tinta().push('How long', 'can two people talk about nothing?')
         assert t.get_plaintext() == 'How long can two people talk about nothing?'
-        assert t.get_str(plaintext=True) == 'How long can two people talk about nothing?'
+        assert t.to_str(plaintext=True) == 'How long can two people talk about nothing?'
 
     def test_sep(self):
         t = Tinta('How long', sep='').push(
             'can two people talk about nothing?').push('Hmm?')
         assert t.get_plaintext(
             sep='') == 'How longcan two people talk about nothing? Hmm?'
-        assert t.get_str(plaintext=True, sep='') == 'How longcan two people talk about nothing? Hmm?'
+        assert t.to_str(plaintext=True, sep='') == 'How longcan two people talk about nothing? Hmm?'
 
         t = Tinta('How long').push('can two people',
                                   'talk about nothing?', sep='')
         assert t.get_plaintext() == 'How long can two peopletalk about nothing?'
-        assert t.get_str(plaintext=True) == 'How long can two peopletalk about nothing?'
+        assert t.to_str(plaintext=True) == 'How long can two peopletalk about nothing?'
 
         t = Tinta().pink('A section').push().white().blue(
             'of text', sep='').green(',').push().purple('separated.')
         assert t.get_plaintext() == 'A section of text, separated.'
-        assert t.get_str(plaintext=True) == 'A section of text, separated.'
+        assert t.to_str(plaintext=True) == 'A section of text, separated.'
 
     def testparts(self):
         assert len(Tinta().green('green').red('red').blue('blue').parts) == 3
@@ -140,43 +140,43 @@ class TestComplexStructure:
                    .red('red')
                    .blue('blue')
                    .yellow('yellow')
-                   .get_parts("fmt")) == 4
+                   .parts("fmt")) == 4
         assert len(Tinta()
                    .green('green')
                    .underline()
                    .red('red')
                    .blue('blue')
-                   .get_parts("pln")) == 3
+                   .parts("pln")) == 3
 
     def test_f_strings(self):
         dog = 'cat'
         assert (Tinta(f"A {dog} is a human's best friend").get_plaintext()
                 == "A cat is a human's best friend")
         assert Tinta(
-            f"A {Tinta().red('hologram').get_str()} is a human's best friend")
+            f"A {Tinta().red('hologram').to_str()} is a human's best friend")
 
     def test_add(self):
         t = Tinta().push('How long').push('can two people talk about nothing?')
         assert t.get_plaintext() == 'How long can two people talk about nothing?'
 
         assert len(t.parts) == 2
-        assert len(t.get_parts("fmt")) == 2
-        assert len(t.get_parts("pln")) == 2
+        assert len(t.parts_fmt) == 2
+        assert len(t.parts_pln) == 2
 
         t = Tinta().push('How long', 'can two people talk about nothing?')
         assert t.get_plaintext() == 'How long can two people talk about nothing?'
 
         assert len(t.parts) == 1
-        assert len(t.get_parts("fmt")) == 1
-        assert len(t.get_parts("pln")) == 1
+        assert len(t.parts_fmt) == 1
+        assert len(t.parts_pln) == 1
 
     def test_remove(self):
         t = Tinta().push('How long').push('can two people talk about nothing?')
         t.remove()
         assert t.get_plaintext() == 'How long'
         assert len(t.parts) == 1
-        assert len(t.get_parts("fmt")) == 1
-        assert len(t.get_parts("pln")) == 1
+        assert len(t.parts_fmt) == 1
+        assert len(t.parts_pln) == 1
 
         t = Tinta()
         for p in range(10):

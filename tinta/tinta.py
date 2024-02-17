@@ -25,20 +25,19 @@ it's almost like a unicorn.
 """
 
 import configparser
-import functools
 import os
 import re
 import sys
 from pathlib import Path
-from typing import cast, Literal, Optional, Self, Union
+from typing import Any, cast, Optional, Self
 
 from colors import color
 from typing_extensions import deprecated
 
-from tinta.discover import discover as _discover
+from .discover import discover as _discover
+from .typ import copy_kwargs
 
 config = configparser.ConfigParser()
-
 
 CURSOR_UP_ONE = '\x1b[1A'
 ERASE_LINE = '\x1b[2K'
@@ -63,7 +62,7 @@ class Tinta(metaclass=_MetaTinta):
         .dim(' dim').print())
 
     Args:
-        *s (tuple(str)): A sequence of one or more text strings, to be joined together.
+        *s (tuple(Any)): A sequence of one or more text strings, to be joined together.
         sep (str): Used to join segment strings. Defaults to ' '.
 
     Attributes:
@@ -72,15 +71,16 @@ class Tinta(metaclass=_MetaTinta):
         style (str):                A style string, e.g. 'bold', 'dim', 'underline'.
                                     Multiple styles are joined with a +
         parts (list):               A list of Part objects.
-        parts_formatted (list):     A list of richly styled text segments.
-        parts_plaintext (list):     A list of unstyled text segments.
+        get_parts(style: str):      Returns a list of string parts, or a list of Parts.
 
     Methods:
-        text() -> str:              Returns a compiled rich text string
-        plaintext() -> str:         Returns a compiled plaintext string
-        add() -> self:              Adds segments using any previously
-                                    defined styles.
-        code() -> self:             Adds segments using the specified ansi code.
+        to_str() -> str:           Returns a compiled rich text string, or use plaintext=True for plaintext.
+        push() -> self:             Adds segments to this Tinta instance.
+        pop(qty: int) -> self:              Removes the last 'qty' segments from this Tinta instance.
+        text()                      [deprecated] 
+        plaintext()                 [deprecated] 
+        add()                       [deprecated, use push or __call__]
+        code()                      [deprecated]
         bold() -> self:             Sets segments to bold.
         underline() -> self:        Sets segments to underline.
         dim() -> self:              Sets segments to a darker, dimmed color.
@@ -90,7 +90,7 @@ class Tinta(metaclass=_MetaTinta):
         print():                    Prints the output of a Tinta instance, then resets.
     """
 
-    def __init__(self, *s: str, sep: Optional[str] = None):
+    def __init__(self, *s: Any, sep: Optional[str] = None):
         """Main intializer for Tinta
 
         Args:
@@ -111,7 +111,7 @@ class Tinta(metaclass=_MetaTinta):
         if s:
             self.push(*s, sep=self._get_default_sep(sep))
 
-    def __call__(self, *s: str, sep: Optional[str] = None) -> 'Tinta':
+    def __call__(self, *s: Any, sep: Optional[str] = None) -> 'Tinta':
         return self.push(*s, sep=sep)
 
     def __repr__(self) -> str:
@@ -121,7 +121,7 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             str: Plaintext string
         """
-        return str(self.get_str(plaintext=True))
+        return str(self.to_str(plaintext=True))
 
     def _colorizer(self, c: str):
         """Generates statically typed color methods
@@ -132,10 +132,10 @@ class Tinta(metaclass=_MetaTinta):
         """
         self.__setattr__(c, self.push)
 
-    @deprecated("Use get_str() instead.")
+    @deprecated("Use to_str() instead.")
     def get_text(self, sep: Optional[str] = None) -> str:
         """
-        Deprecated. Use get_str() instead.
+        Deprecated. Use to_str() instead.
 
         Args:
             sep (str, optional): Used to join strings. Defaults to ''.
@@ -143,9 +143,9 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             str: A rich text string.
         """
-        return self.get_str(sep=sep or '')
+        return self.to_str(sep=sep or '')
 
-    def get_str(self, sep: str='', plaintext: bool = False) -> str:
+    def to_str(self, sep: str='', plaintext: bool = False) -> str:
         """Returns a compiled rich text string, joined by 'sep'. Note that any separators included with a 
         part will be returned as part of the string - adding a separator here may result in a double separator.
 
@@ -166,34 +166,15 @@ class Tinta(metaclass=_MetaTinta):
 
     @property
     def parts(self) -> list['Tinta.Part']:
-        """Returns a list of Tinta parts
+        """A list of Tinta.Part objects.
 
         Returns:
-            list[Part]: A list of Parts."""
-        return self._parts
-
-    def get_parts(self, style: Optional[Literal['fmt', 'pln', 'esc', 'Part']]=None) -> Union[list[str], list['Tinta.Part']]:
-        """Returns a list of string parts
-
-        Args:
-            style (str, optional): The style of the parts to return. Defaults to None. Can be 'fmt', 'pln', or 'esc'.
-
-        Returns:
-            list[str] | list[Part]: A list of Parts, or a list of strings if specifying 'style'."""
-
-        if style == 'fmt':
-            return [part.fmt for part in self._parts]
-
-        if style == 'pln':
-            return [part.pln for part in self._parts]
-
-        if style == 'esc':
-            return [part.esc for part in self._parts]
+            list[Part]: A list of Tinta.Part objects"""
 
         return self._parts
 
     @property
-    @deprecated("Use parts[style='formatted'] instead.")
+    @deprecated("Use parts_fmt instead.")
     def parts_formatted(self) -> list:
         """Returns a list of richly formated string parts
 
@@ -202,7 +183,15 @@ class Tinta(metaclass=_MetaTinta):
         return [part.fmt for part in self._parts]
 
     @property
-    @deprecated("Use parts[style='formatted'] instead.")
+    def parts_fmt(self) -> list:
+        """Returns a list of richly formated string parts
+
+        Returns:
+            str: A list of formatted strings."""
+        return [part.fmt for part in self._parts]
+
+    @property
+    @deprecated("Use parts_pln instead.")
     def parts_plaintext(self) -> list:
         """Returns a list of plaintext string parts
 
@@ -211,7 +200,14 @@ class Tinta(metaclass=_MetaTinta):
         return [part.pln for part in self._parts]
 
     @property
-    @deprecated("Use parts[style='formatted'] instead.")
+    def parts_pln(self) -> list:
+        """Returns a list of plaintext string parts
+
+        Returns:
+            str: A list of plaintext strings."""
+        return [part.pln for part in self._parts]
+
+    @property
     def parts_esc(self) -> list:
         """Returns a list of escaped formatted string parts
 
@@ -219,9 +215,9 @@ class Tinta(metaclass=_MetaTinta):
             str: A list of esc strings."""
         return [part.esc for part in self._parts]
 
-    @deprecated("Use get_str(plaintext=True) instead.")
+    @deprecated("Use to_str(plaintext=True) instead.")
     def get_plaintext(self, sep: Optional[str] = None) -> str:
-        """Deprecated. Use get_str(plaintext=True) instead.
+        """Deprecated. Use to_str(plaintext=True) instead.
 
         Args:
             sep (str, optional): Used to join strings. Defaults to ''.
@@ -229,10 +225,10 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             str: A plaintext string.
         """
-        return self.get_str(sep=sep or '', plaintext=True)
+        return self.to_str(sep=sep or '', plaintext=True)
 
 
-    def push(self, *s: str, sep: Optional[str] = None) -> 'Tinta':
+    def push(self, *s: Any, sep: Optional[str] = None) -> 'Tinta':
         """Adds segments to this Tinta instance
 
         Args:
@@ -274,8 +270,8 @@ class Tinta(metaclass=_MetaTinta):
         return self
 
 
-    @deprecated("Use push() or just __call__() (e.g. Tinta('text')('more text')) instead.")
-    def add(self, *s: str, sep: Optional[str] = None) -> 'Tinta':
+    @deprecated("Use use push() or __call__() directly (e.g. Tinta('text')('more text')) instead.")
+    def add(self, *s: Any, sep: Optional[str] = None) -> 'Tinta':
         """Deprecated. Use push() or just __call__() (e.g. Tinta('text')('more text')) instead.
 
         Args:
@@ -285,10 +281,6 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             self
         """
-        return self.push(*s, sep=sep)
-
-    @functools.wraps(push)
-    def _(self, *s: str, sep: Optional[str] = None) -> 'Tinta':
         return self.push(*s, sep=sep)
 
 
@@ -310,13 +302,13 @@ class Tinta(metaclass=_MetaTinta):
         return self.pop(qty)
 
     # pylint: disable=redefined-outer-name
-    def tint(self, color: Optional[str | int] = None, *s: str, sep: str | None=None) -> 'Tinta':
+    def tint(self, color: Optional[str | int] = None, *s: Any, sep: str | None=None) -> 'Tinta':
         """Adds segments of text colored with the specified color.
         Can be used in place of calling named color methods.
 
         Args:
             color (str | int, optional): A color name or ANSI color index. Defaults to first argument.
-            *s: str: Segments of text to add.
+            *s: Any: Segments of text to add.
             sep (str, optional): Used to join strings. Defaults to ' '.
 
         Returns:
@@ -345,7 +337,7 @@ class Tinta(metaclass=_MetaTinta):
         return self
 
     @deprecated("Use tint() instead, setting color=<int:A valid ANSI color code>.")
-    def code(self, code: int = 0, *s: str, sep: Optional[str]=None) -> 'Tinta':
+    def code(self, code: int = 0, *s: Any, sep: Optional[str]=None) -> 'Tinta':
         """Adds segments of text colored with the specified ANSI code.
 
         Args:
@@ -360,7 +352,8 @@ class Tinta(metaclass=_MetaTinta):
         self.push(*s, sep=self._get_default_sep(sep))
         return self
 
-    def bold(self, *s: str, sep: Optional[str]=None) -> 'Tinta':
+
+    def bold(self, *s: Any, sep: Optional[str]=None) -> 'Tinta':
         """Adds bold segments to this Tinta instance
 
         Args:
@@ -374,7 +367,11 @@ class Tinta(metaclass=_MetaTinta):
         self.push(*s, sep=self._get_default_sep(sep))
         return self
 
-    def underline(self, *s: str, sep: Optional[str]=None) -> 'Tinta':
+    @copy_kwargs(bold)
+    def b(self, *args, **kwargs):
+        return self.bold(*args, **kwargs)
+
+    def underline(self, *s: Any, sep: Optional[str]=None) -> 'Tinta':
         """Adds underline segments to this Tinta instance
 
         Args:
@@ -388,7 +385,15 @@ class Tinta(metaclass=_MetaTinta):
         self.push(*s, sep=self._get_default_sep(sep))
         return self
 
-    def dim(self, *s: str, sep: Optional[str]=None) -> 'Tinta':
+    @copy_kwargs(underline)
+    def u(self, *args, **kwargs):
+        return self.underline(*args, **kwargs)
+
+    @copy_kwargs(underline)
+    def _(self, *args, **kwargs):
+        return self.underline(*args, **kwargs)
+
+    def dim(self, *s: Any, sep: Optional[str]=None) -> 'Tinta':
         """Adds darker (dimmed) segments to this Tinta instance
 
         Args:
@@ -402,7 +407,7 @@ class Tinta(metaclass=_MetaTinta):
         self.push(*s, sep=self._get_default_sep(sep))
         return self
 
-    def normal(self, *s: str, sep: Optional[str]=None) -> 'Tinta':
+    def normal(self, *s: Any, sep: Optional[str]=None) -> 'Tinta':
         """Removes all styles, then adds segments to this Tinta instance
 
         Args:
@@ -417,7 +422,7 @@ class Tinta(metaclass=_MetaTinta):
         self.push(*s, sep=self._get_default_sep(sep))
         return self
 
-    def reset(self, *s: str, sep: Optional[str]=None) -> 'Tinta':
+    def clear(self, *s: Any, sep: Optional[str]=None) -> 'Tinta':
         """Removes all styles and colors, then adds segments to this
         Tinta instance
 
@@ -432,9 +437,9 @@ class Tinta(metaclass=_MetaTinta):
         self.normal(*s, sep=self._get_default_sep(sep))
         return self
 
-    @functools.wraps(reset)
-    def clear(self, *s: str, sep: Optional[str]=None) -> 'Tinta':
-        return self.reset(*s, sep=sep)
+    @deprecated("Use _() or clear() instead.")
+    def reset(self, *s: Any, sep: Optional[str] = None) -> 'Tinta':
+        return self.push(*s, sep=sep)
 
     def line(self, *s, sep=None) -> 'Tinta':
         """Adds segments to this Tinta instance, preceded by a new line.
@@ -463,7 +468,7 @@ class Tinta(metaclass=_MetaTinta):
             sep = str(os.environ.get('TINTA_SEPARATOR', ' '))
         return sep
 
-    def print(self, sep=None, end='\n', file=sys.stdout,
+    def print(self, sep: Optional[str]=None, end='\n', file=sys.stdout,
               flush=False, plaintext=False, force=False):
         """Prints a Tinta composite to the console. Once printed,
         this Tinta instance is cleared of all configuration, but can
@@ -487,9 +492,9 @@ class Tinta(metaclass=_MetaTinta):
             return
 
         use_plaintext = True if plaintext or os.environ.get('TINTA_PLAINTEXT') is not None else False
-        print(self.get_str(sep=self._get_default_sep(sep), plaintext=use_plaintext), end=end, file=file, flush=flush)
+        print(self.to_str(sep=self._get_default_sep(sep), plaintext=use_plaintext), end=end, file=file, flush=flush)
 
-        self.reset()
+        self.clear()
         self._parts = []
         print('\033[0m', end='', file=file, flush=flush)
 
@@ -522,6 +527,7 @@ class Tinta(metaclass=_MetaTinta):
         """Prints all 256 colors in a matrix on your system. If background is True,
         it will print background colors with numbers on top."""
         _discover(background)
+
 
     @staticmethod
     def clearline():
@@ -621,7 +627,7 @@ class Tinta(metaclass=_MetaTinta):
             for k, v in config['colors'].items():
                 self.__setattr__(k, int(v))
 
-        def list_colors(self):
+        def list_colors(self) -> list[str]:
             """Returns a list of all colors in the colors.ini file.
             """
             return list(config['colors'].keys())
