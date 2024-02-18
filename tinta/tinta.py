@@ -7,7 +7,7 @@
 # Full text is available here:
 # https://firstdonoharm.dev/version/2/1/license
 
-# Further to adherence to the Hippocratic Licenese, permission is hereby
+# Further to adherence to the Hippocratic License, permission is hereby
 # granted, free of charge, to any person obtaining a copy of this software
 # and associated documentation files (the "Software") under the terms of the
 # MIT License to deal in the Software without restriction, including without
@@ -31,9 +31,9 @@ import sys
 from pathlib import Path
 from typing import Any, cast, Optional, Self
 
-from colors import color
 from typing_extensions import deprecated
 
+from .colorize import colorize
 from .discover import discover as _discover
 from .typ import copy_kwargs
 
@@ -98,7 +98,7 @@ class Tinta(metaclass=_MetaTinta):
             sep (str, optional): Used to join strings. Defaults to ' '.
         """
 
-        self.color: int | str | None = 0 # 0 is the default color for terminals
+        self.color: int = 0 # 0 is the default color for terminals
         self.style: list = []
         self._default_sep: str = self._get_default_sep(sep)
         self._parts: list['Tinta.Part'] = []
@@ -257,12 +257,9 @@ class Tinta(metaclass=_MetaTinta):
         # Generate style string
         style = '+'.join(list(set(self.style))) if self.style else None
 
+        fg: int = self.color if isinstance(self.color, int) else self.colors.get(self.color or 'white')
         # Generate formatted string
-        fmt = color(p,
-                    fg=self.color
-                    if isinstance(self.color, int)
-                    else getattr(self.colors, self.color or 'white'),
-                    style=style)
+        fmt = colorize(p, fg=fg, style=style)
 
         # Append to parts list
         self._parts.append(Tinta.Part(fmt, p, sep))
@@ -328,11 +325,13 @@ class Tinta(metaclass=_MetaTinta):
             color = int(color)
 
         # Check if color_name is a valid color if color is a string
-        if isinstance(color, str) and not hasattr(self.colors, color):  # type: ignore
-            raise AttributeError(
-                f'Invalid color name: {color}. Is it in colors.ini?')
+        if isinstance(color, str):
+            if not hasattr(self.colors, color):  # type: ignore
+                raise AttributeError(
+                    f'Invalid color name: {color}. Is it in colors.ini?')
+            color = self.colors.get(color)  # type: ignore
 
-        self.color = color
+        self.color = int(color or 0)
         self.push(*s, sep=self._get_default_sep(sep))
         return self
 
@@ -433,7 +432,7 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             self
         """
-        self.color = None
+        self.color = 0
         self.normal(*s, sep=self._get_default_sep(sep))
         return self
 
@@ -626,6 +625,17 @@ class Tinta(metaclass=_MetaTinta):
             config.read(path)
             for k, v in config['colors'].items():
                 self.__setattr__(k, int(v))
+
+        def get(self, color: str) -> int:
+            """Returns the ANSI code for a color.
+
+            Args:
+                color (str): A color name.
+
+            Returns:
+                int: The ANSI code for the color.
+            """
+            return int(config['colors'][color])
 
         def list_colors(self) -> list[str]:
             """Returns a list of all colors in the colors.ini file.

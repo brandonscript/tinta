@@ -7,7 +7,7 @@
 # Full text is available here:
 # https://firstdonoharm.dev/version/2/1/license
 
-# Further to adherence to the Hippocratic Licenese, permission is hereby
+# Further to adherence to the Hippocratic License, permission is hereby
 # granted, free of charge, to any person obtaining a copy of this software
 # and associated documentation files (the "Software") under the terms of the
 # MIT License to deal in the Software without restriction, including without
@@ -20,6 +20,7 @@
 # shall take precedence.
 
 import os
+
 import pytest
 
 if os.getenv('_PYTEST_RAISE', "0") != "0":
