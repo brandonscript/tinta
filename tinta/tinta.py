@@ -29,22 +29,44 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, cast, Optional, Self
+from typing import Any, cast, Optional
 
-from typing_extensions import deprecated
+from typing_extensions import deprecated, Self
 
+from .ansi import AnsiColors
 from .colorize import colorize
 from .discover import discover as _discover
-from .typ import copy_kwargs
+from .typ import copy_kwargs, MissingColorError
 
 config = configparser.ConfigParser()
 
-CURSOR_UP_ONE = '\x1b[1A'
-ERASE_LINE = '\x1b[2K'
+CURSOR_UP_ONE = "\x1b[1A"
+ERASE_LINE = "\x1b[2K"
+SEP = os.getenv("TINTA_SEPARATOR", " ")
+STEALTH = os.environ.get("TINTA_STEALTH")
+PREFER_PLAINTEXT = os.environ.get("TINTA_PLAINTEXT")
+
 
 class _MetaTinta(type):
 
-    colors: 'Tinta._AnsiColors'
+    def __init__(cls, name, bases, dct):
+        super(_MetaTinta, cls).__init__(name, bases, dct)
+        cls.colors = AnsiColors()
+
+    def load_colors(cls, path: str | Path):
+        loaded_colors = AnsiColors(path)
+
+        # Check if any of the color names loaded match the built-in methods. If so, raise an error.
+        for col in loaded_colors.list_colors():
+            if hasattr(cls, col):
+                raise AttributeError(
+                    f"Cannot overwrite built-in method '\
+                        {col}' with color name. Please rename the color in '{path}'."
+                )
+
+        # Add the loaded colors to the Tinta class
+        cls.colors = loaded_colors
+
 
 class Tinta(metaclass=_MetaTinta):
     """Tinta is a magical console output tool with support for printing in
@@ -77,8 +99,8 @@ class Tinta(metaclass=_MetaTinta):
         to_str() -> str:           Returns a compiled rich text string, or use plaintext=True for plaintext.
         push() -> self:             Adds segments to this Tinta instance.
         pop(qty: int) -> self:              Removes the last 'qty' segments from this Tinta instance.
-        text()                      [deprecated] 
-        plaintext()                 [deprecated] 
+        text()                      [deprecated]
+        plaintext()                 [deprecated]
         add()                       [deprecated, use push or __call__]
         code()                      [deprecated]
         bold() -> self:             Sets segments to bold.
@@ -90,7 +112,10 @@ class Tinta(metaclass=_MetaTinta):
         print():                    Prints the output of a Tinta instance, then resets.
     """
 
-    def __init__(self, *s: Any, sep: Optional[str] = None):
+    color: int | str
+    colors: AnsiColors
+
+    def __init__(self, *s: Any, color: Optional[str | int] = None, sep: str = SEP):
         """Main intializer for Tinta
 
         Args:
@@ -98,20 +123,19 @@ class Tinta(metaclass=_MetaTinta):
             sep (str, optional): Used to join strings. Defaults to ' '.
         """
 
-        self.color: int = 0 # 0 is the default color for terminals
-        self.style: list = []
-        self._default_sep: str = self._get_default_sep(sep)
-        self._parts: list['Tinta.Part'] = []
-        self._prefixes: list = []
+        self.color = color or 0  # 0 is the default color for terminals
+        self.style: list[str] = []
+        self._parts: list["Tinta.Part"] = []
+        self._prefixes: list[str] = []
 
         # Inject ANSI helper functions
         for c in vars(self.colors):
             self._colorizer(c)
 
         if s:
-            self.push(*s, sep=self._get_default_sep(sep))
+            self.push(*s, sep=sep)
 
-    def __call__(self, *s: Any, sep: Optional[str] = None) -> 'Tinta':
+    def __call__(self, *s: Any, sep: str = SEP) -> "Tinta":
         return self.push(*s, sep=sep)
 
     def __repr__(self) -> str:
@@ -133,39 +157,45 @@ class Tinta(metaclass=_MetaTinta):
         self.__setattr__(c, self.push)
 
     @deprecated("Use to_str() instead.")
-    def get_text(self, sep: Optional[str] = None) -> str:
+    def get_text(self, sep: str = SEP) -> str:
         """
         Deprecated. Use to_str() instead.
 
         Args:
-            sep (str, optional): Used to join strings. Defaults to ''.
+            sep (str, optional): Used to join strings. Defaults to ' '.
 
         Returns:
             str: A rich text string.
         """
-        return self.to_str(sep=sep or '')
+        return self.to_str(sep=sep)
 
-    def to_str(self, sep: str='', plaintext: bool = False) -> str:
-        """Returns a compiled rich text string, joined by 'sep'. Note that any separators included with a 
+    def to_str(self, sep: Optional[str] = None, plaintext: bool = False) -> str:
+        """Returns a compiled rich text string, joined by 'sep'. Note that any separators included with a
         part will be returned as part of the string - adding a separator here may result in a double separator.
 
         Args:
-            sep (str, optional): Used to join strings. Defaults to ''.
+            sep (str, optional): Used to join strings. Defaults to the separator used when the part was added, or ' '. Setting this will override the part's separator.
 
         Returns:
             str: A rich text string.
         """
 
-        self._colorizer('asdf')
-        self.asdf()
+        if not self._parts:
+            return ""
 
-        attr = 'fmt' if not plaintext else 'pln'
+        attr = "fmt" if not plaintext else "pln"
 
-        return sep.join([f'{getattr(part, attr)}{part.sep}' for part in self._parts]).rstrip(
-            self._parts[-1].sep) if self._parts else sep
+        def _get_sep(part: "Tinta.Part") -> str:
+            return sep if sep is not None else part.sep
+
+        separated_parts = [Tinta.Part(p.fmt, p.pln, _get_sep(p)) for p in self._parts]
+        if separated_parts:
+            separated_parts[-1].sep = ""
+
+        return "".join([f"{getattr(p, attr)}{_get_sep(p)}" for p in separated_parts])
 
     @property
-    def parts(self) -> list['Tinta.Part']:
+    def parts(self) -> list["Tinta.Part"]:
         """A list of Tinta.Part objects.
 
         Returns:
@@ -209,7 +239,7 @@ class Tinta(metaclass=_MetaTinta):
 
     @property
     def parts_esc(self) -> list:
-        """Returns a list of escaped formatted string parts
+        """Returns a list of escaped formatted string parts, so that special characters are visible (i.e., backslashes are doubled).
 
         Returns:
             str: A list of esc strings."""
@@ -220,15 +250,14 @@ class Tinta(metaclass=_MetaTinta):
         """Deprecated. Use to_str(plaintext=True) instead.
 
         Args:
-            sep (str, optional): Used to join strings. Defaults to ''.
+            sep (str, optional): Used to join strings. Defaults to ' '.
 
         Returns:
             str: A plaintext string.
         """
-        return self.to_str(sep=sep or '', plaintext=True)
+        return self.to_str(sep=sep, plaintext=True)
 
-
-    def push(self, *s: Any, sep: Optional[str] = None) -> 'Tinta':
+    def push(self, *s: Any, sep: Optional[str] = SEP) -> "Tinta":
         """Adds segments to this Tinta instance
 
         Args:
@@ -244,31 +273,40 @@ class Tinta(metaclass=_MetaTinta):
         if not s:
             return self
 
-        sep = self._get_default_sep(sep)
+        if sep is None:
+            sep = SEP
 
         # Join all s parts with the specified separator
-        p = sep.join([str(x) for x in s])
+        pln = sep.join([str(x) for x in s])
 
         # Collect any prefixes that may have been set
         if self._prefixes:
-            p = ''.join(self._prefixes) + p
+            pln = "".join(self._prefixes) + pln
             self._prefixes = []
 
         # Generate style string
-        style = '+'.join(list(set(self.style))) if self.style else None
+        style = "+".join(list(set(self.style))) if self.style else None
 
-        fg: int = self.color if isinstance(self.color, int) else self.colors.get(self.color or 'white')
+        fg: int = 0
+        if isinstance(self.color, int):
+            fg = self.color
+        elif isinstance(self.color, str):
+            fg = self.colors.get(self.color or "default")
+
+        # TODO: Add support for background colors
+
         # Generate formatted string
-        fmt = colorize(p, fg=fg, style=style)
+        fmt = colorize(pln, fg=fg, style=style)
 
         # Append to parts list
-        self._parts.append(Tinta.Part(fmt, p, sep))
+        self._parts.append(Tinta.Part(fmt, pln, sep))
 
         return self
 
-
-    @deprecated("Use use push() or __call__() directly (e.g. Tinta('text')('more text')) instead.")
-    def add(self, *s: Any, sep: Optional[str] = None) -> 'Tinta':
+    @deprecated(
+        "Use use push() or __call__() directly (e.g. Tinta('text')('more text')) instead."
+    )
+    def add(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Deprecated. Use push() or just __call__() (e.g. Tinta('text')('more text')) instead.
 
         Args:
@@ -280,8 +318,7 @@ class Tinta(metaclass=_MetaTinta):
         """
         return self.push(*s, sep=sep)
 
-
-    def pop(self, qty: int = 1) -> 'Tinta':
+    def pop(self, qty: int = 1) -> "Tinta":
         """Removes the last 'qty' segments from this Tinta instance
 
         Args:
@@ -295,11 +332,13 @@ class Tinta(metaclass=_MetaTinta):
         return self
 
     @deprecated("Use pop() instead.")
-    def remove(self, qty: int = 1) -> 'Tinta':
+    def remove(self, qty: int = 1) -> "Tinta":
         return self.pop(qty)
 
     # pylint: disable=redefined-outer-name
-    def tint(self, color: Optional[str | int] = None, *s: Any, sep: str | None=None) -> 'Tinta':
+    def tint(
+        self, color: Optional[str | int] = None, *s: Any, sep: str = SEP
+    ) -> "Tinta":
         """Adds segments of text colored with the specified color.
         Can be used in place of calling named color methods.
 
@@ -315,7 +354,8 @@ class Tinta(metaclass=_MetaTinta):
         if not color:
             if not len(s) > 1:
                 raise AttributeError(
-                    'If no color is specified, tint() requires at least two arguments.')
+                    "If no color is specified, tint() requires at least two arguments."
+                )
 
             color = s[0]
             s = s[1:]
@@ -327,16 +367,17 @@ class Tinta(metaclass=_MetaTinta):
         # Check if color_name is a valid color if color is a string
         if isinstance(color, str):
             if not hasattr(self.colors, color):  # type: ignore
-                raise AttributeError(
-                    f'Invalid color name: {color}. Is it in colors.ini?')
+                raise MissingColorError(
+                    f"Invalid color name: {color}. Is it in colors.ini?"
+                )
             color = self.colors.get(color)  # type: ignore
 
-        self.color = int(color or 0)
-        self.push(*s, sep=self._get_default_sep(sep))
+        self.color = color
+        self.push(*s, sep=sep)
         return self
 
     @deprecated("Use tint() instead, setting color=<int:A valid ANSI color code>.")
-    def code(self, code: int = 0, *s: Any, sep: Optional[str]=None) -> 'Tinta':
+    def code(self, code: int = 0, *s: Any, sep: str = SEP) -> "Tinta":
         """Adds segments of text colored with the specified ANSI code.
 
         Args:
@@ -348,11 +389,10 @@ class Tinta(metaclass=_MetaTinta):
             self
         """
         self.color = int(code)
-        self.push(*s, sep=self._get_default_sep(sep))
+        self.push(*s, sep=sep)
         return self
 
-
-    def bold(self, *s: Any, sep: Optional[str]=None) -> 'Tinta':
+    def bold(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Adds bold segments to this Tinta instance
 
         Args:
@@ -362,15 +402,15 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             self
         """
-        self.style.append('bold')
-        self.push(*s, sep=self._get_default_sep(sep))
+        self.style.append("bold")
+        self.push(*s, sep=sep)
         return self
 
     @copy_kwargs(bold)
     def b(self, *args, **kwargs):
         return self.bold(*args, **kwargs)
 
-    def underline(self, *s: Any, sep: Optional[str]=None) -> 'Tinta':
+    def underline(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Adds underline segments to this Tinta instance
 
         Args:
@@ -380,8 +420,8 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             self
         """
-        self.style.append('underline')
-        self.push(*s, sep=self._get_default_sep(sep))
+        self.style.append("underline")
+        self.push(*s, sep=sep)
         return self
 
     @copy_kwargs(underline)
@@ -392,7 +432,7 @@ class Tinta(metaclass=_MetaTinta):
     def _(self, *args, **kwargs):
         return self.underline(*args, **kwargs)
 
-    def dim(self, *s: Any, sep: Optional[str]=None) -> 'Tinta':
+    def dim(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Adds darker (dimmed) segments to this Tinta instance
 
         Args:
@@ -402,11 +442,11 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             self
         """
-        self.style.append('faint')
-        self.push(*s, sep=self._get_default_sep(sep))
+        self.style.append("faint")
+        self.push(*s, sep=sep)
         return self
 
-    def normal(self, *s: Any, sep: Optional[str]=None) -> 'Tinta':
+    def normal(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Removes all styles, then adds segments to this Tinta instance
 
         Args:
@@ -418,10 +458,10 @@ class Tinta(metaclass=_MetaTinta):
         """
         self.style = []
         # self._prefixes.append('\033[24m\033[21m')
-        self.push(*s, sep=self._get_default_sep(sep))
+        self.push(*s, sep=sep)
         return self
 
-    def clear(self, *s: Any, sep: Optional[str]=None) -> 'Tinta':
+    def clear(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Removes all styles and colors, then adds segments to this
         Tinta instance
 
@@ -433,14 +473,14 @@ class Tinta(metaclass=_MetaTinta):
             self
         """
         self.color = 0
-        self.normal(*s, sep=self._get_default_sep(sep))
+        self.normal(*s, sep=sep)
         return self
 
     @deprecated("Use _() or clear() instead.")
-    def reset(self, *s: Any, sep: Optional[str] = None) -> 'Tinta':
+    def reset(self, *s: Any, sep: str = SEP) -> "Tinta":
         return self.push(*s, sep=sep)
 
-    def line(self, *s, sep=None) -> 'Tinta':
+    def line(self, *s, sep: str = SEP) -> "Tinta":
         """Adds segments to this Tinta instance, preceded by a new line.
 
         Args:
@@ -451,24 +491,18 @@ class Tinta(metaclass=_MetaTinta):
             self
         """
         self._prefixes = [os.linesep]
-        self.push(*s, sep=self._get_default_sep(sep))
+        self.push(*s, sep=sep)
         return self
 
-    def _get_default_sep(self, sep: Optional[str]=None) -> str:
-        """Returns an appropriate separator for the given sep arg.
-
-        Args:
-            sep (str, optional): Separator. Defaults to None.
-
-        Returns:
-            str: Separator to use.
-        """
-        if sep is None:
-            sep = str(os.environ.get('TINTA_SEPARATOR', ' '))
-        return sep
-
-    def print(self, sep: Optional[str]=None, end='\n', file=sys.stdout,
-              flush=False, plaintext=False, force=False):
+    def print(
+        self,
+        sep: Optional[str] = None,
+        end="\n",
+        file=sys.stdout,
+        flush=False,
+        plaintext=False,
+        force=False,
+    ):
         """Prints a Tinta composite to the console. Once printed,
         this Tinta instance is cleared of all configuration, but can
         can continue to be used to print.
@@ -479,7 +513,7 @@ class Tinta(metaclass=_MetaTinta):
             TINTA_PLAINTEXT (not None): Prints all output in plaintext.
 
         Args:
-            sep (str, optional): Used to join strings. Defaults to ' '.
+            sep (str, optional): Used to join strings. Defaults to ' ', or whatever was used when the part was added. Setting this will override the part's separator.
             end (str, optional): String terminator. Defaults to '\n'.
             file (optional): File to write to. Defaults to sys.stdout.
             flush (bool, optional): Clears the current console line.
@@ -487,16 +521,20 @@ class Tinta(metaclass=_MetaTinta):
             force (bool, option): Forces printing, overriding TINTA_STEALTH.
         """
         # We don't print if the TINTA_STEALTH env is set
-        if os.environ.get('TINTA_STEALTH') is not None:
+        if STEALTH is not None and not force:
             return
 
-        use_plaintext = True if plaintext or os.environ.get('TINTA_PLAINTEXT') is not None else False
-        print(self.to_str(sep=self._get_default_sep(sep), plaintext=use_plaintext), end=end, file=file, flush=flush)
+        use_plaintext = True if plaintext or PREFER_PLAINTEXT is not None else False
+        print(
+            self.to_str(sep=sep, plaintext=use_plaintext),
+            end=end,
+            file=file,
+            flush=flush,
+        )
 
         self.clear()
         self._parts = []
-        print('\033[0m', end='', file=file, flush=flush)
-
+        print("\033[0m", end="", file=file, flush=flush)
 
     def __getattr__(self, name: str) -> Self:
         """Returns a tinted segment of text.
@@ -517,7 +555,9 @@ class Tinta(metaclass=_MetaTinta):
                     return self.__getattribute__(name)
                 except AttributeError as e:
                     known_colors = f"- {'- '.join(self.colors.list_colors())}"
-                    raise AttributeError(f"Attribute '{name}' not found. Did you try and access a color that doesn't exist? Available colors:\n{known_colors}") from e
+                    raise AttributeError(
+                        f"Attribute '{name}' not found. Did you try and access a color that doesn't exist? Available colors:\n{known_colors}"
+                    ) from e
 
         return self.__getattribute__(name)
 
@@ -527,11 +567,9 @@ class Tinta(metaclass=_MetaTinta):
         it will print background colors with numbers on top."""
         _discover(background)
 
-
     @staticmethod
     def clearline():
-        """Clears the current printed line.
-        """
+        """Clears the current printed line."""
 
         if sys.stdout:
             sys.stdout.write(CURSOR_UP_ONE)
@@ -540,26 +578,11 @@ class Tinta(metaclass=_MetaTinta):
 
     @staticmethod
     def up():
-        """Moves up to the previous line.
-        """
+        """Moves up to the previous line."""
 
         if sys.stdout:
             sys.stdout.write(CURSOR_UP_ONE)
             sys.stdout.flush()
-
-    @classmethod
-    def load_colors(cls, path: str | Path):
-        loaded_colors = cls._AnsiColors(path)
-
-        # Check if any of the color names loaded match the built-in methods. If so, raise an error.
-        for col in loaded_colors.list_colors():
-            if hasattr(cls, col):
-                raise AttributeError(
-                    f"Cannot overwrite built-in method '\
-                        {col}' with color name. Please rename the color in '{path}'.")
-
-        # Add the loaded colors to the Tinta class
-        cls.colors = loaded_colors
 
     class Part:
         """A segment part of text, intended to be joined together
@@ -571,7 +594,7 @@ class Tinta(metaclass=_MetaTinta):
             sep (str):      Used to join segment strings. Defaults to ' '.
         """
 
-        def __init__(self, fmt: str, pln: str, sep: Optional[str] = None):
+        def __init__(self, fmt: str, pln: str, sep: str = SEP):
             self.fmt = fmt
             self.pln = pln
             self.sep = sep
@@ -586,75 +609,16 @@ class Tinta(metaclass=_MetaTinta):
         def esc(self):
             return esc(self.fmt)
 
-    class _AnsiColors:
-
-        """Color builder for Tinta's console output.
-
-        ANSI color map for console output. Get a list of colors here =
-        http://www.lihaoyi.com/post/BuildyourownCommandLinewithANSIescapecodes.html#256-colors
-
-        Or run Tinta.discover() to see all 256 colors on your system.
-
-        You can change the colors the terminal outputs by changing the
-        ANSI values in colors.ini.
-        """
-
-        def __init__(self, path: str | Path | None = None):
-            path = Path(path) if path else Path(__file__).parent / 'colors.ini'
-            if not path.is_absolute():
-                path = Path().cwd() / path
-            if not path.exists():
-                raise FileNotFoundError(
-                    f"Tinta failed to load colors, '{path}' does not exist.")
-
-            # if path is a dir, look for colors.ini
-            if path.is_dir():
-                path = path / 'colors.ini'
-
-            # if there is still no colors.ini file, look for one in Path.cwd() or PYTHONPATH
-            if not path.exists():
-                for p in [Path().cwd(), Path(sys.path[0])]:
-                    if (p / 'colors.ini').exists():
-                        path = p / 'colors.ini'
-                        break
-
-            if not path.exists():
-                raise FileNotFoundError(
-                    f"Tinta failed to load colors, could not find 'colors.ini' in cwd or in PYTHONPATH. Please provide a valid path to a colors.ini file.")
-
-            config.read(path)
-            for k, v in config['colors'].items():
-                self.__setattr__(k, int(v))
-
-        def get(self, color: str) -> int:
-            """Returns the ANSI code for a color.
-
-            Args:
-                color (str): A color name.
-
-            Returns:
-                int: The ANSI code for the color.
-            """
-            return int(config['colors'][color])
-
-        def list_colors(self) -> list[str]:
-            """Returns a list of all colors in the colors.ini file.
-            """
-            return list(config['colors'].keys())
-
-
-Tinta.colors = Tinta._AnsiColors()
-
 
 def escape_ansi(line):
-    ansi_escape = re.compile(r'(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]')
-    return ansi_escape.sub('', line)
+    ansi_escape = re.compile(r"(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]")
+    return ansi_escape.sub("", line)
 
 
 def esc(string: str, replace: bool = False) -> str:
-    """Returns the raw representation of a string. If replace is true, 
+    """Returns the raw representation of a string. If replace is true,
     replace a double backslash with a single backslash."""
     r = repr(string)[1:-1]  # Strip the quotes from representation
     if replace:
-        r = r.replace('\\\\', '\\')
+        r = r.replace("\\\\", "\\")
     return r

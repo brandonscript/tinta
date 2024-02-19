@@ -8,6 +8,13 @@ from typing_extensions import ParamSpec, TypeVar
 P = ParamSpec("P")
 R = TypeVar("R")
 
+
+class MissingColorError(Exception):
+    """Raised when a color is not found in the colors.ini file."""
+
+    pass
+
+
 def copy_kwargs(func: Callable[P, R]) -> Callable[..., Callable[P, R]]:
     """Decorator does nothing but casts the original function to match the given function signature"""
 

@@ -28,13 +28,13 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.append(str(Path().cwd().parent / 'tinta'))
+sys.path.append(str(Path().cwd().parent / "tinta"))
 # pylint: disable=wrong-import-position, wrong-import-order, import-error
 from tinta import Tinta  # noqa: E402
 
 # End import shim
 
-Tinta.load_colors('examples/colors.ini')
+Tinta.load_colors("examples/colors.ini")
 
 # The most basic example we can get.
 Tinta("That's a really nice car!").print()
@@ -43,26 +43,27 @@ Tinta("That's a really nice car!").print()
 Tinta().red("That's a really nice red car!").print()
 
 # Prints the first half in blue, then the rest in red.
-Tinta().blue("That's a cool blue car").red(
-    "but not as cool as my red one").print()
+Tinta().blue("That's a cool blue car").red("but not as cool as my red one").print()
 
 # Prints the first few words in green, separated by _*_,
 # then the final word in purple.
-Tinta().green("Sometimes", "We", "Want", "To",
-              "Join", "Words", "Differently",
-              sep=' * ').purple('Neat!').print()
+Tinta().green(
+    "Sometimes", "We", "Want", "To", "Join", "Words", "Differently", sep=" * "
+).purple("Neat!").print()
 
 # Here we underline a word.
 Tinta().gray("It's").underline("really").normal(
-    "important to be able to style things.").print()
+    "important to be able to style things."
+).print()
 
 # Here we tried to print in pink, but used the plaintext arg in print.
 # You'll notice we still support Python's multiline \ feature.
-Tinta().pink("But it's equally important to be able "
-             "to print things in plaintext, too").print(plaintext=True)
+Tinta().pink(
+    "But it's equally important to be able " "to print things in plaintext, too"
+).print(plaintext=True)
 
 # Let's try some f-strings.
-animal = 'Tiger'
+animal = "Tiger"
 Tinta().orange(f"Hey, we support f-strings, too! Raaarrr, said Ms. {animal}.")
 
 # And dimming some text.
@@ -71,64 +72,76 @@ Tinta().blue("We can").dim("dim").normal("things").print()
 # Things getting out of hand? You can break them up easily in multiple
 # lines, without having to fiddle with \.
 tint = Tinta()
-tint.push('Sometimes we need to')
-tint.pink('break up long lines of text')
-tint.gray('to make them easier to read.')
-tint.line('We can even write to a new line!')
+tint.push("Sometimes we need to")
+tint.pink("break up long lines of text")
+tint.gray("to make them easier to read.")
+tint.line("We can even write to a new line!")
 tint.print()
 
 # You could do the same using multiple segments, or ()
-Tinta().vanilla('I like ice cream',
-                'it comes in all sorts'
-                'of great and yummy flavors.').print()
+Tinta().vanilla(
+    "I like ice cream", "it comes in all sorts" "of great and yummy flavors."
+).print()
 
-(Tinta().vanilla('I like ice cream')
-        .red('especially with cherries on top.').print())
+(Tinta().vanilla("I like ice cream").red("especially with cherries on top.").print())
 
 # When you're done printing, Tinta resets itself, but you can still
 # reuse the original variable.
-tint.push('After a print, Tinta resets itself').green()
-tint.line('but you can still use the same initialized version.')
+tint.push("After a print, Tinta resets itself").green()
+tint.line("but you can still use the same initialized version.")
 tint.print()
 
 # Using native print()'s built-in end, we can terminate a string
 # without a newline.
-Tinta('And of course as always,').print(end='')
-Tinta(' you can print with end=\'\'').print()
+Tinta("And of course as always,").print(end="")
+Tinta(" you can print with end=''").print()
 
 # Not enough colors in config.yaml? Add your own on the fly!
-Tinta().code('Did you know, you can',
-             'write with ansi codes directly, too?', code=127).print()
+Tinta(
+    "Did you know, you can", "write with ansi codes directly, too?", color=127
+).print()
 
 # Have some fun with separators.
-Tinta('A bird', 'I like birds', sep='; ').push(
-    'And also cats', 'and dogs', sep=' ').print(sep='\n')
+Tinta("A bird", "I like birds", sep="; ").push(
+    "And also cats", "and dogs", sep=" "
+).print(sep="\n")
 
 # You could get really fancy and inject some formatted text in the middle,
 # using f-strings.
-(Tinta().mint('Fate.')
- .dark_gray('It protects')
- .underline().blue(
-    f"fools{Tinta().normal().dark_gray(',').to_str()}",
-    sep=''
+(
+    Tinta()
+    .mint("Fate.")
+    .dark_gray("It protects")
+    .underline()
+    .blue(f"fools{Tinta().normal().dark_gray(',').to_str()}", sep="")
+    .normal()
+    .pink("little children,")
+    .dark_gray("and ships named")
+    .purple("Enterprise.")
+    .print()
 )
-    .normal().pink('little children,')
-    .dark_gray('and ships named')
-    .purple("Enterprise.").print())
 
 # Tinta is also smart about how we join things together. If you join
 # several objects together, it collapses repeated whitespace. You
 # can also use 'sep' to force sections to collapse.
-t = Tinta().pink('A section').push().white().blue(
-    'of text', sep='').green(',').push().purple('separated.')
+t = (
+    Tinta()
+    .pink("A section")
+    .push()
+    .white()
+    .blue("of text", sep="")
+    .green(",")
+    .push()
+    .purple("separated.")
+)
 t.print()
 
 # And finally, you can use some helper tools to clear the current
 # console and move up a line.
-Tinta().yellow('Loading...').print()
+Tinta().yellow("Loading...").print()
 time.sleep(1)
 Tinta.clearline()
-Tinta().green('Done').print()
+Tinta().green("Done").print()
 time.sleep(1)
 Tinta.up()
-Tinta().green('Done :)').print()
+Tinta().green("Done :)").print()

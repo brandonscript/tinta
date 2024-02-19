@@ -6,6 +6,7 @@ from .typ import MissingColorError
 
 config = configparser.ConfigParser()
 
+
 class AnsiColors:
     """Color builder for Tinta's console output.
 

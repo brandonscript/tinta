@@ -21,12 +21,13 @@
 
 from logging import getLogger
 
-__version__ = "0.1.5b3"
+__version__ = "0.1.6"
 
 logger = getLogger(__name__)
 
 try:
     from .tinta import Tinta
+
     assert bool(Tinta)
 except ImportError as e:
     logger.warning(e)

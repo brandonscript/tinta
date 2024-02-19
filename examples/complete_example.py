@@ -27,13 +27,13 @@ been installed via pip into the correct modules dir.
 import sys
 from pathlib import Path
 
-sys.path.append(str(Path().cwd().parent / 'tinta'))
+sys.path.append(str(Path().cwd().parent / "tinta"))
 # pylint: disable=wrong-import-position, wrong-import-order, import-error
 from tinta import Tinta  # noqa: E402
 
 # End import shim
 
-Tinta.load_colors('examples/colors.ini')
+Tinta.load_colors("examples/colors.ini")
 
 # from colors.ini:
 
@@ -58,36 +58,35 @@ Tinta.load_colors('examples/colors.ini')
 
 # get names of colors from colors.ini
 colors = []
-with open('examples/colors.ini', 'r', encoding='utf-8') as f:
-    colors = [line.split('=')[0].strip()
-              for line in f.readlines() if '=' in line]
+with open("examples/colors.ini", "r", encoding="utf-8") as f:
+    colors = [line.split("=")[0].strip() for line in f.readlines() if "=" in line]
 
 w = 26
 GAP = "\n\n"
 
-method = "Tinta().print(\"plain\")".ljust(w)
+method = 'Tinta().print("plain")'.ljust(w)
 Tinta(method, " → plain").print(end=GAP)
 
 for col in colors:
     viz = f" → {col}"
-    method = f"Tinta().tint(\"{col}\")".ljust(w)
+    method = f'Tinta().tint("{col}")'.ljust(w)
     Tinta().tint(col, method, viz).print()
 
     t = Tinta()
     func = getattr(t, col)
-    method = f"t.{col}(\"{col}\")".ljust(w)
+    method = f't.{col}("{col}")'.ljust(w)
     func(method, viz).print(end=GAP)
 
 w = 30
 
-method = "Tinta().bold(\"bold\")".ljust(w)
+method = 'Tinta().bold("bold")'.ljust(w)
 Tinta(method, " →").bold("bold").print()
 
-method = "Tinta().underline(\"underline\")".ljust(w)
+method = 'Tinta().underline("underline")'.ljust(w)
 Tinta(method, " →").underline("underline").print()
 
 # dim
-method = "Tinta().dim(\"dim\")".ljust(w)
+method = 'Tinta().dim("dim")'.ljust(w)
 Tinta(method).dim(" → dim").print(end=GAP)
 
 # chain methods
@@ -98,21 +97,20 @@ t.print(end=GAP)
 
 # complex formatting
 t = Tinta()
-t.vanilla("vanilla").bold('bold', sep="\n")
+t.vanilla("vanilla").bold("bold", sep="\n")
 t.reset()
-t.mint("mint").underline('underline', sep="\n")
+t.mint("mint").underline("underline", sep="\n")
 t.reset()
-t.olive("olive").dim('dim', sep="\n")
+t.olive("olive").dim("dim", sep="\n")
 
 t.print(end=GAP)
 
 # reset
 t = Tinta()
-t.vanilla("vanilla").bold('bold', sep="\n")
+t.vanilla("vanilla").bold("bold", sep="\n")
 t.reset("plain text", sep="\n")
-t.mint("mint").underline('underline', sep="\n")
-t.olive("olive inherits underline", sep="\n").dim(
-    'dim inherits both', sep="\n")
+t.mint("mint").underline("underline", sep="\n")
+t.olive("olive inherits underline", sep="\n").dim("dim inherits both", sep="\n")
 t.reset("reset clears all", sep="\n")
 t.amber("so we can start fresh")
 

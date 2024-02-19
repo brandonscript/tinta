@@ -2,22 +2,22 @@
 from tinta.discover import color_sets, discover, flatten, is_dark
 
 
-class TestDiscover():
+class TestDiscover:
 
     def test_is_dark(self):
 
         dark_colors = [
-            *flatten(color_sets['dark']['color1']),
-            *flatten(color_sets['dark']['color2']),
-            *flatten(color_sets['dark']['color3']),
-            *color_sets['dark']['greyscale'],
+            *flatten(color_sets["dark"]["color1"]),
+            *flatten(color_sets["dark"]["color2"]),
+            *flatten(color_sets["dark"]["color3"]),
+            *color_sets["dark"]["greyscale"],
         ]
 
         light_colors = [
-            *flatten(color_sets['light']['color1']),
-            *flatten(color_sets['light']['color2']),
-            *flatten(color_sets['light']['color3']),
-            *color_sets['light']['greyscale'],
+            *flatten(color_sets["light"]["color1"]),
+            *flatten(color_sets["light"]["color2"]),
+            *flatten(color_sets["light"]["color3"]),
+            *color_sets["light"]["greyscale"],
         ]
 
         addl_dark_colors = [0, 1, 4, 5, 8, 9]
