@@ -173,6 +173,8 @@ class Tinta(metaclass=_MetaTinta):
         """Returns a compiled rich text string, joined by 'sep'. Note that any separators included with a
         part will be returned as part of the string - adding a separator here may result in a double separator.
 
+        # TODO: Add magic punctuation handling for sep, to prevent accidental spaces before punctuation.
+
         Args:
             sep (str, optional): Used to join strings. Defaults to the separator used when the part was added, or ' '. Setting this will override the part's separator.
 
