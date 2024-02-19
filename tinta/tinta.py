@@ -353,7 +353,7 @@ class Tinta(metaclass=_MetaTinta):
             self
         """
 
-        if not color:
+        if color is None:
             if not len(s) > 1:
                 raise AttributeError(
                     "If no color is specified, tint() requires at least two arguments."

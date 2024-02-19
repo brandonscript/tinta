@@ -27,4 +27,3 @@ test = "pytest"
 build = "./dist/build.sh"
 publish-test = "./dist/publish.sh --test"
 publish-real = "./dist/publish.sh"
-

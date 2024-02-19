@@ -106,6 +106,9 @@ class TestEdgeCases:
     def test_print_none(self):
         Tinta(None).print()
 
+    def test_tint_color_0(self):
+        Tinta().tint(0, "Zero").print()
+
 
 class TestComplexStructure:
 
