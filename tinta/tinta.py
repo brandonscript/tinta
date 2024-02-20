@@ -363,7 +363,7 @@ class Tinta(metaclass=_MetaTinta):
             s = s[1:]
 
         # if color is numeric integer string, assume it's an ANSI color code
-        if isinstance(color, str) and color.isdigit():
+        if isinstance(color, int) or (isinstance(color, str) and color.isdigit()):
             self.color = int(color)
 
         # Check if color_name is a valid color if color is a string
