@@ -29,7 +29,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, cast, Optional, Union
+from typing import Any, cast, Optional, overload, Union
 
 from typing_extensions import deprecated, Self
 
@@ -376,6 +376,14 @@ class Tinta(metaclass=_MetaTinta):
 
         self.push(*s, sep=sep)
         return self
+
+    @overload
+    def inspect(self, code: int, name: None = None, throw: bool = False) -> str: ...
+
+    @overload
+    def inspect(
+        self, code: None = None, name: str = "default", throw: bool = False
+    ) -> int: ...
 
     def inspect(
         self,
