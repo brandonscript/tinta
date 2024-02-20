@@ -110,6 +110,16 @@ class TestEdgeCases:
         Tinta().tint(0, "Zero").print()
 
 
+class TestFeatures:
+
+    def test_inspect(self):
+        assert Tinta().inspect(code=0) == "default"
+        assert Tinta().inspect(name="default") == 0
+
+        assert Tinta().inspect(code=35) == "green"
+        assert Tinta().inspect(name="green") == 35
+
+
 class TestComplexStructure:
 
     @pytest.mark.parametrize(

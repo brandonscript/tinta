@@ -66,6 +66,23 @@ class AnsiColors:
 
         return int(config["colors"][color])
 
+    def reverse_get(self, code: int) -> str:
+        """Returns the color name for an ANSI code.
+
+        Args:
+            code (int): An ANSI code.
+
+        Returns:
+            str: The color name for the code.
+        """
+        for k, v in config["colors"].items():
+            if int(v) == code:
+                return k
+
+        raise MissingColorError(
+            f"Color with ANSI code '{code}' not found in colors.ini."
+        )
+
     def list_colors(self) -> list[str]:
         """Returns a list of all colors in the colors.ini file."""
         return list(config["colors"].keys())

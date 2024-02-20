@@ -29,7 +29,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, cast, Optional
+from typing import Any, cast, Optional, Union
 
 from typing_extensions import deprecated, Self
 
@@ -364,7 +364,7 @@ class Tinta(metaclass=_MetaTinta):
 
         # if color is numeric integer string, assume it's an ANSI color code
         if isinstance(color, str) and color.isdigit():
-            color = int(color)
+            self.color = int(color)
 
         # Check if color_name is a valid color if color is a string
         if isinstance(color, str):
@@ -372,11 +372,46 @@ class Tinta(metaclass=_MetaTinta):
                 raise MissingColorError(
                     f"Invalid color name: {color}. Is it in colors.ini?"
                 )
-            color = self.colors.get(color)  # type: ignore
+            self.color = self.colors.get(color)  # type: ignore
 
-        self.color = color
         self.push(*s, sep=sep)
         return self
+
+    def inspect(
+        self,
+        code: Optional[int] = None,
+        name: Optional[str] = None,
+        throw: bool = False,
+    ) -> Union[str, int, None]:
+        """Queries the known colors by code or name, and returns the corresponding name or code, respectively.
+
+        Args:
+            code (int, optional): An ANSI color code. Defaults to None.
+            name (str, optional): A color name. Defaults to None.
+
+        Returns:
+            Union[str, int]: A color name or code, if found, otherwise None.
+        """
+
+        if code is not None and name is not None:
+            raise AttributeError(
+                "Tinta.inspect() accepts either a code or a name, not both."
+            )
+
+        try:
+            if code is not None:
+                if code == 0:
+                    return "default"
+                return self.colors.reverse_get(code)
+
+            elif name is not None:
+                if name == "default":
+                    return 0
+                return self.colors.get(name)
+        except MissingColorError as e:
+            if throw:
+                raise e
+        return None
 
     @deprecated("Use tint() instead, setting color=<int:A valid ANSI color code>.")
     def code(self, code: int = 0, *s: Any, sep: str = SEP) -> "Tinta":
