@@ -151,12 +151,7 @@ quote-style = "double"
 [tool.pytest.ini_options]
 pythonpath = ["."]
 minversion = "7.4"
-addopts = "-vv"
-filterwarnings = [
-  # supress warnings triggered by ray internally
-  'ignore:pkg_resources is deprecated:DeprecationWarning',
-  'ignore:Deprecated call to `pkg_resources:DeprecationWarning',
-]
+addopts = "-rP -vv --color=yes"
 testpaths = ["tests"]
 python_files = ["*_test.py", "test_*.py"]
 python_classes = ["test_", "_test", "Test*"]

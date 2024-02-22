@@ -25,6 +25,7 @@ it's almost like a unicorn.
 """
 
 import configparser
+import functools
 import os
 import re
 import sys
@@ -154,7 +155,7 @@ class Tinta(metaclass=_MetaTinta):
         Args:
             c (str): Method name of color, e.g. 'pink', 'blue'.
         """
-        self.__setattr__(c, self.push)
+        self.__setattr__(c, functools.partial(self.tint, c))
 
     @deprecated("Use to_str() instead.")
     def get_text(self, sep: str = SEP) -> str:
