@@ -16,6 +16,9 @@
 import re
 from typing import List, Optional, Tuple, Union
 
+ANSI_RESET_HEX = "\x1b[0m"
+ANSI_RESET_OCT = "\033[0m"
+
 STYLES = (
     "none",
     "bold",
@@ -103,15 +106,19 @@ def colorize(
     fg: Optional[int] = None,
     bg: Optional[int] = None,
     style: Optional[str] = None,
+    reset: bool = False,
 ) -> str:
     """
     Add ANSI colors and styles to a string.
 
-    :param s: String to format.
-    :param fg: Foreground color specification.
-    :param bg: Background color specification.
-    :param style: Style names, separated by '+'
-    :returns: Formatted string.
+    Args:
+    s: String to format.
+    fg: Foreground color specification.
+    bg: Background color specification.
+    style: Style names, separated by '+'
+    reset: Whether to reset the formatting at the end of the string. Default is False.
+
+    Returns: Formatted string.
     """
     codes: List[str] = []
 
@@ -127,7 +134,9 @@ def colorize(
                 raise ValueError(f'Invalid style "{style_part}"')
 
     if codes:
-        template = "\x1b[{0}m{1}\x1b[0m"
+        template = "\x1b[{0}m{1}"
+        if reset:
+            template += ANSI_RESET_HEX
         return template.format(_join(*codes), s)
     else:
         return s

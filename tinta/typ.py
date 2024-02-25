@@ -1,12 +1,14 @@
 import functools
 import inspect
 from collections.abc import Callable
-from typing import Any, cast
+from typing import Any, cast, Literal
 
 from typing_extensions import ParamSpec, TypeVar
 
 P = ParamSpec("P")
 R = TypeVar("R")
+
+StringType = Literal["pln", "esc", "fmt"]
 
 
 class MissingColorError(Exception):
@@ -26,3 +28,10 @@ def copy_kwargs(func: Callable[P, R]) -> Callable[..., Callable[P, R]]:
         return _cast_func
 
     raise RuntimeError("You must pass a function to this decorator.")
+
+
+def parse_bool(value: Any) -> bool:
+    """Parses a string value to a boolean value."""
+    if isinstance(value, bool):
+        return value
+    return str(value).lower() in ("true", "1", "t", "y", "yes")

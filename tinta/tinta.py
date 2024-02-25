@@ -29,23 +29,25 @@ import functools
 import os
 import re
 import sys
+from itertools import zip_longest
 from pathlib import Path
 from typing import Any, cast, Optional, overload, Union
 
 from typing_extensions import deprecated, Self
 
 from .ansi import AnsiColors
-from .colorize import colorize
+from .colorize import ANSI_RESET_HEX, colorize
 from .discover import discover as _discover
-from .typ import copy_kwargs, MissingColorError
+from .typ import copy_kwargs, MissingColorError, parse_bool, StringType
 
 config = configparser.ConfigParser()
 
 CURSOR_UP_ONE = "\x1b[1A"
 ERASE_LINE = "\x1b[2K"
 SEP = os.getenv("TINTA_SEPARATOR", " ")
-STEALTH = os.environ.get("TINTA_STEALTH")
-PREFER_PLAINTEXT = os.environ.get("TINTA_PLAINTEXT")
+STEALTH = parse_bool(os.getenv("TINTA_STEALTH", False))
+PREFER_PLAINTEXT = parse_bool(os.getenv("TINTA_PLAINTEXT", False))
+SMART_FIX_PUNCTUATION = parse_bool(os.getenv("TINTA_SMART_FIX_PUNCTUATION", True))
 
 
 class _MetaTinta(type):
@@ -157,6 +159,87 @@ class Tinta(metaclass=_MetaTinta):
         """
         self.__setattr__(c, functools.partial(self.tint, c))
 
+    def _get_sep(
+        self,
+        p: "Tinta.Part",
+        next_p: Optional["Tinta.Part"],
+        sep: Optional[str],
+    ) -> str:
+        if not next_p:
+            return ""
+        return sep if sep is not None else p.sep
+
+    def _get_str(
+        self,
+        attr: StringType,
+        p: "Tinta.Part",
+        next_p: Optional["Tinta.Part"] = None,
+        sep: Optional[str] = None,
+        fix_punc: bool = SMART_FIX_PUNCTUATION,
+    ) -> str:
+
+        s: str = getattr(p, attr)
+
+        next_is_punc = (
+            next_p.pln[0]
+            in [
+                ".",
+                ",",
+                ";",
+                ":",
+                "!",
+                "?",
+            ]
+            if fix_punc and next_p and next_p.pln
+            else False
+        )
+
+        if not next_is_punc:
+            s = f"{s}{self._get_sep(p, next_p, sep)}"
+
+        if fix_punc:
+            s = re.sub(r"(\w)\s+([.,;:!?])", r"\1\2", s)
+
+        if next_p is None and p.has_formatting:
+            if attr == "fmt":
+                s += ANSI_RESET_HEX
+            elif attr == "esc":
+                s += esc(ANSI_RESET_HEX)
+
+        return s
+
+    def to_str(
+        self,
+        sep: Optional[str] = None,
+        plaintext: bool = False,
+        escape_ansi: bool = False,
+        fix_punctuation: bool = SMART_FIX_PUNCTUATION,
+    ) -> str:
+        """Returns a compiled rich text string, joined by 'sep'. Note that any separators included with a
+        part will be returned as part of the string - adding a separator here may result in a double separator.
+
+        Args:
+            sep (str, optional): Used to join strings. Defaults to the separator used when the part was added, or ' '. Setting this will override the part's separator.
+            plaintext (bool, optional): If True, returns a plaintext string. Defaults to False.
+            escape_ansi (bool, optional): If True, will escape ANSI codes' \ → \\. Defaults to False.
+            fix_punctuation (bool, optional): If True, will fix punctuation spacing. Defaults to SMART_FIX_PUNCTUATION or True.
+
+        Returns:
+            str: A rich text string.
+        """
+
+        if not self._parts:
+            return ""
+
+        attr: StringType = "pln" if plaintext else "esc" if escape_ansi else "fmt"
+
+        return "".join(
+            [
+                self._get_str(attr, p, np, sep, fix_punctuation)
+                for p, np in zip_longest(self._parts, self._parts[1:])
+            ]
+        )
+
     @deprecated("Use to_str() instead.")
     def get_text(self, sep: str = SEP) -> str:
         """
@@ -169,33 +252,6 @@ class Tinta(metaclass=_MetaTinta):
             str: A rich text string.
         """
         return self.to_str(sep=sep)
-
-    def to_str(self, sep: Optional[str] = None, plaintext: bool = False) -> str:
-        """Returns a compiled rich text string, joined by 'sep'. Note that any separators included with a
-        part will be returned as part of the string - adding a separator here may result in a double separator.
-
-        # TODO: Add magic punctuation handling for sep, to prevent accidental spaces before punctuation.
-
-        Args:
-            sep (str, optional): Used to join strings. Defaults to the separator used when the part was added, or ' '. Setting this will override the part's separator.
-
-        Returns:
-            str: A rich text string.
-        """
-
-        if not self._parts:
-            return ""
-
-        attr = "fmt" if not plaintext else "pln"
-
-        def _get_sep(part: "Tinta.Part") -> str:
-            return sep if sep is not None else part.sep
-
-        separated_parts = [Tinta.Part(p.fmt, p.pln, _get_sep(p)) for p in self._parts]
-        if separated_parts:
-            separated_parts[-1].sep = ""
-
-        return "".join([f"{getattr(p, attr)}{_get_sep(p)}" for p in separated_parts])
 
     @property
     def parts(self) -> list["Tinta.Part"]:
@@ -567,10 +623,10 @@ class Tinta(metaclass=_MetaTinta):
             force (bool, option): Forces printing, overriding TINTA_STEALTH.
         """
         # We don't print if the TINTA_STEALTH env is set
-        if STEALTH is not None and not force:
+        if STEALTH and not force:
             return
 
-        use_plaintext = True if plaintext or PREFER_PLAINTEXT is not None else False
+        use_plaintext = True if plaintext or PREFER_PLAINTEXT else False
         print(
             self.to_str(sep=sep, plaintext=use_plaintext),
             end=end,
@@ -651,9 +707,18 @@ class Tinta(metaclass=_MetaTinta):
         def __repr__(self):
             return self.__str__()
 
+        def __eq__(self, other) -> bool:
+            if not isinstance(other, Tinta.Part):
+                return False
+            return self.fmt == other.fmt and self.pln == other.pln
+
         @property
         def esc(self):
             return esc(self.fmt)
+
+        @property
+        def has_formatting(self) -> bool:
+            return self.fmt != self.pln
 
 
 def escape_ansi(line):

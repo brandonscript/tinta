@@ -1,11 +1,10 @@
-
 # Tinta
 
 <img width="200" alt="Tinta Logo" src="https://user-images.githubusercontent.com/1480253/118584629-38023b80-b74c-11eb-8511-05258af553fb.png">
 
 Tinta is a magical console output tool with support for printing in beautiful colors and with rich formatting, like bold and underline, using static, chain-able methods. It's so pretty, it's almost like a unicorn!
 
-![version](https://img.shields.io/badge/version-0.1.5--beta-green.svg) [![GitHub Actions Badge](https://img.shields.io/github/actions/workflow/status/brandonscript/tinta/run-tests.yml)](https://github.com/brandonscript/tinta/actions) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=brandonscript/tinta&amp;utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) ![MIT License](https://img.shields.io/github/license/brandonscript/tinta) [![](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162)](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](code_of_conduct.md)
+![version](https://img.shields.io/badge/version-0.1.5--beta-green.svg) [![GitHub Actions Badge](https://img.shields.io/github/actions/workflow/status/brandonscript/tinta/run-tests.yml)](https://github.com/brandonscript/tinta/actions) [![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=brandonscript/tinta&utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) ![MIT License](https://img.shields.io/github/license/brandonscript/tinta) [![](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162)](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162) [![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)](code_of_conduct.md)
 
 ## Features and Tinta Basics
 
@@ -134,6 +133,16 @@ Tinta().pink('Unicorns are soft, and').bold('very').normal('kind.').print()
 # You can change this with the sep arg:
 Tinta().pink('Unicorns are soft, and', sep="").bold('very').normal('kind.').print()
 # prints: Unicorns are soft,andvery kind.
+
+# Tinta will also try and fix common punctuation issues that can occur when segments are joined together:
+Tinta().pink('Unicorns are soft, and').purple(", you know,").bold('very').normal(', very, kind.').print()
+# With smart fixing disabled, this would normally print:
+# > Unicorns are soft, and , you know, very , very, kind.
+
+# But with smart fixing enabled, it prints correctly:
+# > Unicorns are soft, and, you know, very, very, kind.
+
+# This is turned on by default, but you can disable this by setting TINTA_SMART_FIX_PUNCTUATION to `false` in your environment.
 ```
 
 You can run the examples in the `examples/` directory to see more:
@@ -168,7 +177,7 @@ A note on linters like Pylance or pylint: these methods are dynamically generate
 # pyright: reportGeneralTypeIssues=false
 Tinta().green() # or
 # pylint: disable=no-member
-Tinta().green() 
+Tinta().green()
 ```
 
 If this is frustrating, you can always use the `Tinta.code(<int>)` or the `Tinta.tint(<color>)` methods, which are not dynamically generated.
@@ -181,9 +190,11 @@ Each color method (and `Tinta`) supports the following args. A copy if itself is
 - `sep (str)` – Used to join segment strings. Defaults to `' '`.
 
 For example:
+
 ```python
 Tinta('A set', 'of strings', 'joined', 'with', 'semicolons', sep=';').print()
 ```
+
 ```bash
 ~ » A set;of strings;joined;with;semicolons
 ```
@@ -199,18 +210,18 @@ All `Tinta` and dynamic color methods will make available the following attribut
 
 #### Built-in Methods
 
- - `print()` – Prints to the console. See below for supported args.
- - `text(sep=' ') -> str` – Returns a compiled rich text string
- - `plaintext(sep=' ') -> str` – Returns a compiled plaintext string
- - `add() -> self` – Adds segments using any previously defined styles.
- - `line() -> self` – Appends the contents preceded by a newline char (`\n`).
- - `bold() -> self` – Sets segments to bold.
- - `underline() -> self` – Sets segments to underline.
- - `dim() -> self` – Sets segments to a darker, dimmed color.
- - `code() -> self` – Adds segments using the specified ansi code.
- - `normal() -> self` – Resets the style to default.
- - `reset() -> self` – Resets both style and color to default.
- - `discover()` – Prints a list of available colors to the console.
+- `print()` – Prints to the console. See below for supported args.
+- `text(sep=' ') -> str` – Returns a compiled rich text string
+- `plaintext(sep=' ') -> str` – Returns a compiled plaintext string
+- `add() -> self` – Adds segments using any previously defined styles.
+- `line() -> self` – Appends the contents preceded by a newline char (`\n`).
+- `bold() -> self` – Sets segments to bold.
+- `underline() -> self` – Sets segments to underline.
+- `dim() -> self` – Sets segments to a darker, dimmed color.
+- `code() -> self` – Adds segments using the specified ansi code.
+- `normal() -> self` – Resets the style to default.
+- `reset() -> self` – Resets both style and color to default.
+- `discover()` – Prints a list of available colors to the console.
 
 All style methods support the same arguments as `Tinta` and dynamic color methods:
 
@@ -248,6 +259,7 @@ tint.green('A tree').print()
 ```
 
 #### `add()`
+
 Sometimes you want the convenience of readability without changing styles, or you might want to use control flow to set a variable. For these, you can use `add()`:
 
 ```python
@@ -266,6 +278,7 @@ Tinta().brown('I am a brown bear', sep='').black(', and I am a black bear.').pri
 ```
 
 #### `line()`
+
 Adds your same text, but preceded by a newline.
 
 ```python
@@ -278,11 +291,13 @@ Tinta('A cat').line('scratches').print()
 
 Sometimes you might want to use a color that wasn't defined in your `colors.ini`. For that, you can use `.code()`.
 Just set the `code` arg to specify an ANSI color code:
+
 ```python
 Tinta().code('A bear', code=42).print()
 ```
 
 This is useful for adding colors on the fly if they aren't defined in `colors.ini`.
+
 ## Environment Variables
 
 Sometimes it's useful to globally configure `Tinta` on a system where you might want it to behave differently, without changing your source code. If these Environment variables are present on the system, they will be considered True.
@@ -293,6 +308,7 @@ Sometimes it's useful to globally configure `Tinta` on a system where you might 
 
 `TINTA_SEPARATOR` – Changes the default separator (`' '`) to this value.
 
+`TINTA_SMART_FIX_PUNCTUATION` – Controls smart punctuation fixing (default: `true`)
 
 ## Running Tests
 
@@ -310,8 +326,7 @@ Contributions are welcome! Please send in a PR with a clear explanation of what 
 ## Acknowledgements
 
 Special thanks to [@katherinecodes](https://twitter.com/katherinecodes) for [readme.so](https://readme.so/), [@jessicaspacekat](https://twitter.com/jessicaspacekat) for [rikeripsum.com](http://rikeripsum.com), and [ansicolors](https://github.com/jonathaneunice/colors/).
+
 ## License
 
 Tinta is licensed under both the [MIT License](LICENSE) and the [Hippocratic License](https://firstdonoharm.dev/version/2/1/license.html). Were a conflict or dispute to arise between these two licenses, the **Hippocratic License** license shall take precedence. Under its principles of Do No Harm, no portion of this software may be used to (or be a part of software that can be used to) cause, infer, encourage, incite, or otherwise lead to physical or verbal harm for any person or people, _especially_ marginalized and underrepresented people.
-
-
