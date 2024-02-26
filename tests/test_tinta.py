@@ -129,31 +129,28 @@ class TestFeatures:
         "test,expected",
         [
             ("Hello world", "Hello world"),
+            (Tinta("Hello")("world").to_str(), "Hello world"),
             ("Hello  world", "Hello  world"),
-            ("Hello , world", "Hello, world"),
-            ("Hello world !", "Hello world!"),
-            ("Hello , world.", "Hello, world."),
+            (Tinta("Hello ")("world").to_str(), "Hello  world"),
+            ("Hello , world", "Hello , world"),
+            (Tinta("Hello")(", world").to_str(), "Hello, world"),
+            ("Hello world !", "Hello world !"),
+            (Tinta("Hello world")("!").to_str(), "Hello world!"),
+            (", world", ", world"),
             (" , world", " , world"),
-        ],
-    )
-    def test_smart_fix_punctuation_plaintext(self, test: str, expected: str):
-        assert Tinta(test).to_str() == expected
-
-    @pytest.mark.parametrize(
-        "test,expected",
-        [
+            (Tinta(",")("world").to_str(), ", world"),
             (
                 Tinta()
                 .red(" *** Important : Smart fix punctuation should work with")
                 .green("ANSI")
                 .red(", as well as plaintext.")
                 .to_str(),
-                "\x1b[38;5;1m *** Important: Smart fix punctuation should work with \x1b[38;5;35mANSI\x1b[38;5;1m, as well as plaintext.\x1b[0m",
+                "\x1b[38;5;1m *** Important : Smart fix punctuation should work with \x1b[38;5;35mANSI\x1b[38;5;1m, as well as plaintext.\x1b[0m",
             ),
         ],
     )
-    def test_smart_fix_punctuation_ansi(self, test: str, expected: str):
-        assert test == expected
+    def test_smart_fix_punctuation(self, test: str, expected: str):
+        assert Tinta(test).to_str() == expected
 
 
 class TestComplexStructure:

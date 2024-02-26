@@ -197,8 +197,9 @@ class Tinta(metaclass=_MetaTinta):
         if not next_is_punc:
             s = f"{s}{self._get_sep(p, next_p, sep)}"
 
-        if fix_punc:
-            s = re.sub(r"(\w)\s+([.,;:!?])", r"\1\2", s)
+        # TODO: Not certain we ever want to do this, it has too many false negatives
+        # if fix_punc:
+        #     s = re.sub(r"(\w)\s+([.,;:!?])", r"\1\2", s)
 
         if next_p is None and p.has_formatting:
             if attr == "fmt":
