@@ -136,6 +136,7 @@ class TestFeatures:
             (Tinta("Hello")(", world").to_str(), "Hello, world"),
             ("Hello world !", "Hello world !"),
             (Tinta("Hello world")("!").to_str(), "Hello world!"),
+            (" *** Important", " *** Important"),
             (", world", ", world"),
             (" , world", " , world"),
             (Tinta(",")("world").to_str(), ", world"),

@@ -347,11 +347,16 @@ class Tinta(metaclass=_MetaTinta):
         # Generate style string
         style = "+".join(list(set(self.style))) if self.style else None
 
-        fg: int = 0
+        fg: Union[int, None] = 0
         if isinstance(self.color, int):
             fg = self.color
         elif isinstance(self.color, str):
             fg = self.colors.get(self.color or "default")
+
+        if not any(p.has_formatting for p in self._parts):
+            # We don't want to add an ansi reset code if we're not adding any formatting
+            if fg == 0:
+                fg = None
 
         # TODO: Add support for background colors
 

@@ -122,11 +122,11 @@ def colorize(
     """
     codes: List[str] = []
 
-    if fg:
+    if fg is not None:
         codes.append(_color_code(fg, 30))
-    if bg:
+    if bg is not None:
         codes.append(_color_code(bg, 40))
-    if style:
+    if style is not None:
         for style_part in style.split("+"):
             if style_part in STYLES:
                 codes.append(str(STYLES.index(style_part)))
