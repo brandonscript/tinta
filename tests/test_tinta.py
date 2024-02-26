@@ -284,3 +284,18 @@ class TestComplexStructure:
         t.remove(2)  # Shouldn't error if we remove more than we have
 
         assert len(t.parts) == 0
+
+    def test_zero_handles_reset(self):
+        s = (
+            Tinta("White")
+            .red("Red")
+            .green("Green")
+            .blue("Blue")
+            .tint(0, "Reset")
+            .to_str(sep=" ")
+        )
+        print(s)
+        assert (
+            s
+            == "White \x1b[38;5;1mRed \x1b[38;5;35mGreen \x1b[38;5;32mBlue \x1b[0mReset\x1b[0m"
+        )

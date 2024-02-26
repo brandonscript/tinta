@@ -87,9 +87,9 @@ def _color_code(
     if isinstance(spec, str):
         spec = spec.strip().lower()
 
-    if spec == "default":
-        return _join(base + 9)
-    elif isinstance(spec, int) and 0 <= spec <= 255:
+    if spec == "default" or spec == 0:
+        return "0"
+    elif isinstance(spec, int) and 1 <= spec <= 255:
         return _join(base + 8, 5, spec)
     elif isinstance(spec, (tuple, list)):
         return _join(base + 8, 2, _join(*spec))
@@ -124,8 +124,9 @@ def colorize(
 
     if fg is not None:
         codes.append(_color_code(fg, 30))
-    if bg is not None:
-        codes.append(_color_code(bg, 40))
+    # TODO: Background is not implemented
+    # if bg is not None:
+    #     codes.append(_color_code(bg, 40))
     if style is not None:
         for style_part in style.split("+"):
             if style_part in STYLES:

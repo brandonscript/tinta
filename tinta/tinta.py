@@ -264,6 +264,14 @@ class Tinta(metaclass=_MetaTinta):
         return self._parts
 
     @property
+    def has_formatting(self) -> bool:
+        """Returns True if any part has formatting.
+
+        Returns:
+            bool: True if any part has formatting."""
+        return any(p.has_formatting for p in self._parts)
+
+    @property
     @deprecated("Use parts_fmt instead.")
     def parts_formatted(self) -> list:
         """Returns a list of richly formated string parts
@@ -353,10 +361,9 @@ class Tinta(metaclass=_MetaTinta):
         elif isinstance(self.color, str):
             fg = self.colors.get(self.color or "default")
 
-        if not any(p.has_formatting for p in self._parts):
+        if not self.has_formatting and fg == 0:
             # We don't want to add an ansi reset code if we're not adding any formatting
-            if fg == 0:
-                fg = None
+            fg = None
 
         # TODO: Add support for background colors
 
