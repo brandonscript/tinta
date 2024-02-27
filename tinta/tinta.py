@@ -233,7 +233,7 @@ class Tinta(metaclass=_MetaTinta):
         Args:
             sep (str, optional): Used to join strings. Defaults to the separator used when the part was added, or ' '. Setting this will override the part's separator.
             plaintext (bool, optional): If True, returns a plaintext string. Defaults to False.
-            escape_ansi (bool, optional): If True, will escape ANSI codes' \ → \\. Defaults to False.
+            escape_ansi (bool, optional): If True, will escape ANSI codes' \\ → \\\\. Defaults to False.
             fix_punctuation (bool, optional): If True, will fix punctuation spacing. Defaults to SMART_FIX_PUNCTUATION or True.
 
         Returns:
