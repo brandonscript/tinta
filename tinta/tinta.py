@@ -193,8 +193,19 @@ class Tinta(metaclass=_MetaTinta):
             if fix_punc and next_p and next_p.pln
             else False
         )
+        should_ignore_sep = (
+            next_is_punc
+            and any(
+                [
+                    (len(next_p.pln) == 1),
+                    (len(next_p.pln) > 1 and next_p.pln[1] == " "),
+                ]
+            )
+            if next_p and next_p.pln
+            else False
+        )
 
-        if not next_is_punc:
+        if not should_ignore_sep:
             s = f"{s}{self._get_sep(p, next_p, sep)}"
 
         # TODO: Not certain we ever want to do this, it has too many false negatives
