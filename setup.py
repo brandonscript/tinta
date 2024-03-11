@@ -37,7 +37,7 @@ setup(
     url="http://github.com/brandonscript/tinta",
     author="Brandon Shelley",
     author_email="brandon@pacificaviator.co",
-    install_requires=["ansicolors"],
+    install_requires=[],
     include_package_data=True,
     license="MIT",
     packages=["tinta"],
