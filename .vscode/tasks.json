@@ -1,30 +1,30 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
-    "version": "2.0.0",
-    "tasks": [
-      {
-        "label": "Build",
-        "type": "shell",
-        "command": "rm -rf dist; hatchling build; twine check dist/*",
-        "problemMatcher": [],
-        "group": {
-          "kind": "build",
-          "isDefault": true
-        }
-      },
-      {
-        "label": "Publish [Test]",
-        "type": "shell",
-        "command": "./publish.sh --test",
-        "group": "build",
-        "problemMatcher": []
-      },
-      {
-        "label": "Publish [Prod]",
-        "type": "shell",
-        "command": "./publish.sh",
-        "group": "build"
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build",
+      "type": "shell",
+      "command": "rm -rf dist; hatchling build; twine check dist/*",
+      "problemMatcher": [],
+      "group": {
+        "kind": "build",
+        "isDefault": true
       }
-    ]
+    },
+    {
+      "label": "Publish [Test]",
+      "type": "shell",
+      "command": "./dist/publish.sh --test",
+      "group": "build",
+      "problemMatcher": []
+    },
+    {
+      "label": "Publish [Prod]",
+      "type": "shell",
+      "command": "./dist/publish.sh",
+      "group": "build"
+    }
+  ]
 }
