@@ -23,9 +23,30 @@ import re
 import sys
 from itertools import zip_longest
 from pathlib import Path
-from typing import Any, cast, Optional, overload, Union
+from typing import Any, cast, List, Optional, overload, Union
 
-from typing_extensions import deprecated, Self
+try:
+    from typing import deprecated
+except ImportError:
+    try:
+        from typing_extensions import deprecated
+    except ImportError:
+        from typing import cast
+
+        def deprecated(msg: str) -> Any:
+            def _decorator(func: Any) -> Any:
+                return cast(Any, func)
+
+            return _decorator
+
+
+try:
+    from typing import Self
+except ImportError:
+    try:
+        from typing_extensions import Self
+    except ImportError:
+        Self = "Tinta"
 
 from .ansi import AnsiColors
 from .colorize import ANSI_RESET_HEX, colorize
@@ -48,7 +69,7 @@ class _MetaTinta(type):
         super(_MetaTinta, cls).__init__(name, bases, dct)
         cls.colors = AnsiColors()
 
-    def load_colors(cls, path: str | Path):
+    def load_colors(cls, path: Union[str, Path]):
         loaded_colors = AnsiColors(path)
 
         # Check if any of the color names loaded match the built-in methods. If so, raise an error.
@@ -107,10 +128,12 @@ class Tinta(metaclass=_MetaTinta):
         print():                    Prints the output of a Tinta instance, then resets.
     """
 
-    color: int | str
+    color: Union[int, str]
     colors: AnsiColors
 
-    def __init__(self, *s: Any, color: Optional[str | int] = None, sep: str = SEP):
+    def __init__(
+        self, *s: Any, color: Optional[Union[str, int]] = None, sep: str = SEP
+    ):
         """Main intializer for Tinta
 
         Args:
@@ -119,9 +142,9 @@ class Tinta(metaclass=_MetaTinta):
         """
 
         self.color = color or 0  # 0 is the default color for terminals
-        self.style: list[str] = []
-        self._parts: list["Tinta.Part"] = []
-        self._prefixes: list[str] = []
+        self.style: List[str] = []
+        self._parts: List["Tinta.Part"] = []
+        self._prefixes: List[str] = []
 
         # Inject ANSI helper functions
         for c in vars(self.colors):
@@ -258,11 +281,11 @@ class Tinta(metaclass=_MetaTinta):
         return self.to_str(sep=sep)
 
     @property
-    def parts(self) -> list["Tinta.Part"]:
+    def parts(self) -> List["Tinta.Part"]:
         """A list of Tinta.Part objects.
 
         Returns:
-            list[Part]: A list of Tinta.Part objects"""
+            List[Part]: A list of Tinta.Part objects"""
 
         return self._parts
 
@@ -412,7 +435,7 @@ class Tinta(metaclass=_MetaTinta):
 
     # pylint: disable=redefined-outer-name
     def tint(
-        self, color: Optional[str | int] = None, *s: Any, sep: str = SEP
+        self, color: Optional[Union[str, int]] = None, *s: Any, sep: str = SEP
     ) -> "Tinta":
         """Adds segments of text colored with the specified color.
         Can be used in place of calling named color methods.

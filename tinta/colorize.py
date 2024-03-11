@@ -13,6 +13,11 @@
 # ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 # OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 
+# This module is a modified version of the original AnsiColors module, and further
+# modified by github.com/brandoncript to be used in the Tinta project. It is
+# distributed under the same license as the original module, as well as the
+# MIT License.
+
 import re
 from typing import List, Optional, Tuple, Union
 

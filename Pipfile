@@ -20,10 +20,12 @@ setuptools = "*"
 wheel = "*"
 
 [requires]
-python_version = "3.10"
+python_version = "3.6"
 
 [scripts]
 test = "pytest"
 build = "./dist/build.sh"
 publish-test = "./dist/publish.sh --test"
 publish-real = "./dist/publish.sh"
+lint-check = "ruff check tinta"
+lint-fix = "ruff fix tinta"
