@@ -3,21 +3,13 @@
 # Tinta
 # Copyright 2024 github.com/brandoncript
 
-# This program is bound to the Hippocratic License 2.1
-# Full text is available here:
-# https://firstdonoharm.dev/version/2/1/license
+# Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
-# Further to adherence to the Hippocratic License, permission is hereby
-# granted, free of charge, to any person obtaining a copy of this software
-# and associated documentation files (the "Software") under the terms of the
-# MIT License to deal in the Software without restriction, including without
-# limitation the rights to use, copy, modify, merge, publish, distribute,
-# sublicense, and / or sell copies of the Software, and to permit persons
-# to whom the Software is furnished to do so, subject to the conditions layed
-# out in the MIT License.
+# The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
 
-# Where a conflict or dispute would arise between these two licenses, HLv2.1
-# shall take precedence.
+# THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+# If you use this software, you must also agree under the terms of the Hippocratic License 3.0 to not use this software in a way that directly or indirectly causes harm. You can find the full text of the license at https://firstdonoharm.dev.
 
 """Tinta is a magical console output tool with support for printing in beautiful
 colors and with rich formatting, like bold and underline. It's so pretty,
@@ -602,11 +594,15 @@ class Tinta(metaclass=_MetaTinta):
         self.normal(*s, sep=sep)
         return self
 
-    @deprecated("Use _() or clear() instead.")
+    @deprecated("Use clear() instead.")
     def reset(self, *s: Any, sep: str = SEP) -> "Tinta":
         return self.push(*s, sep=sep)
 
+    @deprecated("Use nl() instead.")
     def line(self, *s, sep: str = SEP) -> "Tinta":
+        return self.nl(*s, sep=sep)
+
+    def nl(self, *s, sep: str = SEP) -> "Tinta":
         """Adds segments to this Tinta instance, preceded by a new line.
 
         Args:
