@@ -1,6 +1,6 @@
-# # Tinta
+## Tinta
 
-<img width=_"200"_ alt=_"Tinta Logo"_ src=_"https://user-images.githubusercontent.com/1480253/118584629-38023b80-b74c-11eb-8511-05258af553fb.png"_>
+<img width="200" alt="Tinta Logo" src="https://user-images.githubusercontent.com/1480253/118584629-38023b80-b74c-11eb-8511-05258af553fb.png" />
 
 Tinta is a magical console output tool with support for printing in beautiful colors and with rich formatting, like bold and underline, using static, chain-able methods. It's so pretty, it's almost like a unicorn!
 
@@ -51,9 +51,9 @@ t.mint("Enterprise.").print()
 
 Glad you asked! Here are some pretty pictures:
 
-<img width=_"600"_ alt=_"Unicorns"_ src=_"https://user-images.githubusercontent.com/1480253/118717080-70e8f180-b7da-11eb-8ce8-08fe837fe73f.png"_>
-
-<img width=_"600"_ alt=_"Starbase"_ src=_"https://user-images.githubusercontent.com/1480253/118717091-734b4b80-b7da-11eb-9ecc-5cae5888878b.png"_>
+<img width="600" alt="Unicorns" src="https://user-images.githubusercontent.com/1480253/118717080-70e8f180-b7da-11eb-8ce8-08fe837fe73f.png" />
+<br>
+<img width="600" alt="Starbase" src="https://user-images.githubusercontent.com/1480253/118717091-734b4b80-b7da-11eb-9ecc-5cae5888878b.png" />
 
 ## Installation and Getting Started
 
@@ -105,7 +105,7 @@ Tinta.discover()
 Tinta.discover(background=True)
 ```
 
-<img src=_"https://github.com/brandonscript/tinta/blob/main/examples/tinta-discover.png?raw=true"_ style=_"max-width: 540px; !important"_ width=_"540"_ alt=_"Tinta.discover() output, a set of ANSI color-coded numbers in the terminal"_ />
+<img src="https://github.com/brandonscript/tinta/blob/main/examples/tinta-discover.png?raw=true" style="max-width: 540px; !important" width="540" alt="Tinta.discover() output, a set of ANSI color-coded numbers in the terminal" />
 
 ## Tinta Basics
 
