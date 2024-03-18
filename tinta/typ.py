@@ -13,26 +13,9 @@
 
 """This module contains type hints and utility functions for Tinta."""
 import functools
-import inspect
-import sys
 from typing import Any, Callable, cast
 
-if sys.version_info >= (3, 10):
-    from typing import Literal, ParamSpec, TypeVar
-
-    P = ParamSpec("P") if sys.version_info >= (3, 10) else ...  # type: ignore
-    R = TypeVar("R")  # type: ignore
-
-    GenericCallable = Callable[P, R]
-elif sys.version_info >= (3, 8):
-    from typing import Literal
-
-    GenericCallable = Any
-else:
-    from typing_extensions import Literal
-
-    GenericCallable = Any
-
+from .multi_version_imports import GenericCallable, Literal
 
 StringType = Literal["pln", "esc", "fmt"]  # type: ignore
 
@@ -50,10 +33,12 @@ def copy_kwargs(func: GenericCallable) -> Callable[..., GenericCallable]:
     def _cast_func(_func: Callable[..., Any]) -> GenericCallable:
         return cast(GenericCallable, _func)
 
-    if inspect.isfunction(func):
-        return _cast_func
+    if not callable(func):
+        raise RuntimeError(
+            f"You must pass a function to this decorator, got {func} instead."
+        )
 
-    raise RuntimeError("You must pass a function to this decorator.")
+    return _cast_func
 
 
 def parse_bool(value: Any) -> bool:

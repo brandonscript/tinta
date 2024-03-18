@@ -25,6 +25,83 @@
       "type": "shell",
       "command": "./dist/publish.sh",
       "group": "build"
+    },
+    {
+      "label": "Run Pytest (Python 3.6)",
+      "type": "shell",
+      "command": "pipenv",
+      "args": ["run", "--python", "3.6", "pytest"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Run Pytest (Python 3.7)",
+      "type": "shell",
+      "command": "pipenv",
+      "args": ["run", "--python", "3.7", "pytest"],
+      "group": "test"
+    },
+    {
+      "label": "Run Pytest (Python 3.8)",
+      "type": "shell",
+      "command": "pipenv",
+      "args": ["run", "--python", "3.8", "pytest"],
+      "group": "test"
+    },
+    {
+      "label": "Run Pytest (Python 3.9)",
+      "type": "shell",
+      "command": "pipenv",
+      "args": ["run", "--python", "3.9", "pytest"],
+      "group": "test"
+    },
+    {
+      "label": "Run Pytest (Python 3.10)",
+      "type": "shell",
+      "command": "pipenv",
+      "args": ["run", "--python", "3.10", "pytest"],
+      "group": "test"
+    },
+    {
+      "label": "Run Pytest (Python 3.11)",
+      "type": "shell",
+      "command": "pipenv",
+      "args": ["run", "--python", "3.11", "pytest"],
+      "group": {
+        "kind": "test",
+        "isDefault": true
+      }
+    },
+    {
+      "label": "Run Pytest (Python 3.12)",
+      "type": "shell",
+      "command": "pipenv",
+      "args": ["run", "--python", "3.12", "pytest"],
+      "group": "test"
+    },
+    {
+      "label": "Run Pytest (Python 3.13)",
+      "type": "shell",
+      "command": "pipenv",
+      "args": ["run", "--python", "3.13", "pytest"],
+      "group": "test"
+    },
+    {
+      "label": "Run All Pytest Versions",
+      "type": "shell",
+      "dependsOn": [
+        "Run Pytest (Python 3.6)",
+        "Run Pytest (Python 3.7)",
+        "Run Pytest (Python 3.8)",
+        "Run Pytest (Python 3.9)",
+        "Run Pytest (Python 3.10)",
+        "Run Pytest (Python 3.11)",
+        "Run Pytest (Python 3.12)",
+        "Run Pytest (Python 3.13)"
+      ],
+      "group": "test"
     }
   ]
 }

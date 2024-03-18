@@ -43,105 +43,95 @@ Borrowing design from https://github.com/fidian/ansi
                 244   245   246   247   248   249   250   251   252   253   254   255
 """
 
-import sys
-from collections.abc import Iterable
-from typing import List, Union
+from typing import cast, List
 
-if sys.version_info >= (3, 8):
-    from typing import Literal, TypeVar
-elif sys.version_info >= (3, 5):
-    from typing import TypeVar
+from .multi_version_imports import Literal
+from .utils import flatmap
 
-    from typing_extensions import Literal
+STANDARD: List[int] = list(range(8))
+BRIGHT: List[int] = list(range(8, 16))
+DARK_GREYSCALE: List[int] = list(range(232, 244))
+DARK_COLOR1: List[List[int]] = [
+    [16, 17, 18, 19, 20, 21],
+    [52, 53, 54, 55, 56, 57],
+    [88, 89, 90, 91, 92, 93],
+    [124, 125, 126, 127, 128, 129],
+    [160, 161, 162, 163, 164, 165],
+    [196, 197, 198, 199, 200, 201],
+]
+
+DARK_COLOR2: List[List[int]] = [
+    [22, 23, 24, 25, 26, 27],
+    [58, 59, 60, 61, 62, 63],
+    [94, 95, 96, 97, 98, 99],
+    [130, 131, 132, 133, 134, 135],
+    [166, 167, 168, 169, 170, 171],
+    [202, 203, 204, 205, 206, 207],
+]
+
+DARK_COLOR3: List[List[int]] = [
+    [28, 29, 30, 31, 32, 33],
+    [64, 65, 66, 67, 68, 69],
+    [100, 101, 102, 103, 104, 105],
+    [136, 137, 138, 139, 140, 141],
+    [172, 173, 174, 175, 176, 177],
+    [208, 209, 210, 211, 212, 213],
+]
+DARK_COLORS = sorted(
+    flatmap(DARK_COLOR1)
+    + flatmap(DARK_COLOR2)
+    + flatmap(DARK_COLOR3)
+    + DARK_GREYSCALE
+    + STANDARD
+)
+
+LIGHT_GREYSCALE: List[int] = list(range(244, 256))
+LIGHT_COLOR1: List[List[int]] = [
+    [34, 35, 36, 37, 38, 39],
+    [70, 71, 72, 73, 74, 75],
+    [106, 107, 108, 109, 110, 111],
+    [142, 143, 144, 145, 146, 147],
+    [178, 179, 180, 181, 182, 183],
+    [214, 215, 216, 217, 218, 219],
+]
+
+LIGHT_COLOR2: List[List[int]] = [
+    [40, 41, 42, 43, 44, 45],
+    [76, 77, 78, 79, 80, 81],
+    [112, 113, 114, 115, 116, 117],
+    [148, 149, 150, 151, 152, 153],
+    [184, 185, 186, 187, 188, 189],
+    [220, 221, 222, 223, 224, 225],
+]
+
+LIGHT_COLOR3: List[List[int]] = [
+    [46, 47, 48, 49, 50, 51],
+    [82, 83, 84, 85, 86, 87],
+    [118, 119, 120, 121, 122, 123],
+    [154, 155, 156, 157, 158, 159],
+    [190, 191, 192, 193, 194, 195],
+    [226, 227, 228, 229, 230, 231],
+]
 
 color_sets = {
-    "standard": [0, 1, 2, 3, 4, 5, 6, 7],
-    "bright": [8, 9, 10, 11, 12, 13, 14, 15],
     "dark": {
-        "greyscale": [232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243],
-        "color1": [
-            [16, 17, 18, 19, 20, 21],
-            [52, 53, 54, 55, 56, 57],
-            [88, 89, 90, 91, 92, 93],
-            [124, 125, 126, 127, 128, 129],
-            [160, 161, 162, 163, 164, 165],
-            [196, 197, 198, 199, 200, 201],
-        ],
-        "color2": [
-            [22, 23, 24, 25, 26, 27],
-            [58, 59, 60, 61, 62, 63],
-            [94, 95, 96, 97, 98, 99],
-            [130, 131, 132, 133, 134, 135],
-            [166, 167, 168, 169, 170, 171],
-            [202, 203, 204, 205, 206, 207],
-        ],
-        "color3": [
-            [28, 29, 30, 31, 32, 33],
-            [64, 65, 66, 67, 68, 69],
-            [100, 101, 102, 103, 104, 105],
-            [136, 137, 138, 139, 140, 141],
-            [172, 173, 174, 175, 176, 177],
-            [208, 209, 210, 211, 212, 213],
-        ],
+        "color1": DARK_COLOR1,
+        "color2": DARK_COLOR2,
+        "color3": DARK_COLOR3,
+        "greyscale": DARK_GREYSCALE,
     },
     "light": {
-        "greyscale": [244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255],
-        "color1": [
-            [34, 35, 36, 37, 38, 39],
-            [70, 71, 72, 73, 74, 75],
-            [106, 107, 108, 109, 110, 111],
-            [142, 143, 144, 145, 146, 147],
-            [178, 179, 180, 181, 182, 183],
-            [214, 215, 216, 217, 218, 219],
-        ],
-        "color2": [
-            [40, 41, 42, 43, 44, 45],
-            [76, 77, 78, 79, 80, 81],
-            [112, 113, 114, 115, 116, 117],
-            [148, 149, 150, 151, 152, 153],
-            [184, 185, 186, 187, 188, 189],
-            [220, 221, 222, 223, 224, 225],
-        ],
-        "color3": [
-            [46, 47, 48, 49, 50, 51],
-            [82, 83, 84, 85, 86, 87],
-            [118, 119, 120, 121, 122, 123],
-            [154, 155, 156, 157, 158, 159],
-            [190, 191, 192, 193, 194, 195],
-            [226, 227, 228, 229, 230, 231],
-        ],
+        "color1": LIGHT_COLOR1,
+        "color2": LIGHT_COLOR2,
+        "color3": LIGHT_COLOR3,
+        "greyscale": LIGHT_GREYSCALE,
     },
 }
-
-T = TypeVar("T")
-
-
-def flatten(lst: Union[List[T], List[List[T]]]) -> List[T]:
-    """Flattens a list of lists into a single list. If the list is already flat,
-    it is returned as is.
-    """
-
-    flattened = []
-    for item in lst:
-        if isinstance(item, Iterable) and not isinstance(item, (str, bytes)):
-            for sub_x in flatten(item):  # type: ignore
-                flattened.append(sub_x)
-        else:
-            flattened.append(item)
-    return flattened
 
 
 def is_dark(code: int) -> bool:
     """Returns True if the given color is a dark color, False otherwise."""
-    dark_colors = sorted(
-        flatten(color_sets["dark"]["color1"])
-        + flatten(color_sets["dark"]["color2"])
-        + flatten(color_sets["dark"]["color3"])
-        + color_sets["dark"]["greyscale"]
-        + [0, 1, 2, 3, 4, 5, 6, 8, 9]
-    )
-
-    return code in dark_colors
+    return code in DARK_COLORS
 
 
 def colorbox(code: int, background: bool = False) -> str:
@@ -164,11 +154,11 @@ def discover(background: bool = False):
     """Prints all 256 colors in a matrix on your system."""
 
     print("Standard: ", end="")
-    for col in color_sets["standard"]:
+    for col in STANDARD:
         print(colorbox(col, background), end="")
 
     print("\nBright:   ", end="")
-    for col in color_sets["bright"]:
+    for col in BRIGHT:
         print(colorbox(col, background), end="")
 
     print("\n")
@@ -176,8 +166,13 @@ def discover(background: bool = False):
     def print_row(brightness: Literal["light", "dark"], cset: int, row: int, i: int):
         cset_key = "color" + str(cset)
         col = (row * 6) + i
+        colorset = cast(List[List[int]], color_sets[brightness][cset_key])
         print(
-            colorbox(flatten(color_sets[brightness][cset_key])[col], background), end=""
+            colorbox(
+                flatmap(colorset)[col],
+                background,
+            ),
+            end="",
         )
 
     for cset in range(1, 4):
@@ -196,11 +191,11 @@ def discover(background: bool = False):
         print("")
 
     print("Greyscale: ", end="")
-    for grey in color_sets["dark"]["greyscale"]:
+    for grey in DARK_GREYSCALE:
         print(colorbox(grey, background), end="")
 
     print("\n           ", end="")
-    for grey in color_sets["light"]["greyscale"]:
+    for grey in LIGHT_GREYSCALE:
         print(colorbox(grey, background), end="")
 
     print("\n")

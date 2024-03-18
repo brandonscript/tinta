@@ -25,28 +25,7 @@ from itertools import zip_longest
 from pathlib import Path
 from typing import Any, cast, List, Optional, overload, Union
 
-try:
-    from typing import deprecated
-except ImportError:
-    try:
-        from typing_extensions import deprecated
-    except ImportError:
-        from typing import cast
-
-        def deprecated(msg: str) -> Any:
-            def _decorator(func: Any) -> Any:
-                return cast(Any, func)
-
-            return _decorator
-
-
-try:
-    from typing import Self
-except ImportError:
-    try:
-        from typing_extensions import Self
-    except ImportError:
-        Self = "Tinta"
+from deprecation import deprecated
 
 from .ansi import AnsiColors
 from .colorize import ANSI_RESET_HEX, colorize
@@ -433,10 +412,14 @@ class Tinta(metaclass=_MetaTinta):
     def remove(self, qty: int = 1) -> "Tinta":
         return self.pop(qty)
 
+    @overload
+    def tint(self, *s: Any, color: Union[str, int], sep: str = SEP) -> "Tinta": ...
+
+    @overload
+    def tint(self, color: Union[str, int], *s: Any, sep: str = SEP) -> "Tinta": ...
+
     # pylint: disable=redefined-outer-name
-    def tint(
-        self, color: Optional[Union[str, int]] = None, *s: Any, sep: str = SEP
-    ) -> "Tinta":
+    def tint(self, *args, **kwargs) -> "Tinta":
         """Adds segments of text colored with the specified color.
         Can be used in place of calling named color methods.
 
@@ -449,14 +432,24 @@ class Tinta(metaclass=_MetaTinta):
             self
         """
 
+        # color: Optional[Union[str, int]] = None, *s: Any, sep: str = SEP
+
+        # check if the first argument is a known color or valid ANSI code, or comes from kwargs
+        s = args
+        color = kwargs.get("color", None)
+        sep = kwargs.get("sep", SEP)
         if color is None:
             if not len(s) > 1:
                 raise AttributeError(
                     "If no color is specified, tint() requires at least two arguments."
                 )
-
-            color = s[0]
-            s = s[1:]
+            if args and isinstance(args[0], (str, int)):
+                color = s[0]
+                s = s[1:]
+            else:
+                raise AttributeError(
+                    "Could not determine color from arguments. Either pass a color as the first argument, or use the color keyword argument."
+                )
 
         # if color is numeric integer string, assume it's an ANSI color code
         if isinstance(color, int) or (isinstance(color, str) and color.isdigit()):
@@ -681,7 +674,7 @@ class Tinta(metaclass=_MetaTinta):
         self._parts = []
         print("\033[0m", end="", file=file, flush=flush)
 
-    def __getattr__(self, name: str) -> Self:
+    def __getattr__(self, name: str) -> "Tinta":
         """Returns a tinted segment of text.
 
         Args:
@@ -693,18 +686,18 @@ class Tinta(metaclass=_MetaTinta):
 
         if not name.startswith("_"):
             if hasattr(self.colors, name):
-                return cast(Self, self.tint(color=name))
+                return cast("Tinta", self.tint(color=name))
 
             else:
                 try:
-                    return self.__getattribute__(name)
+                    return self.__getattribute__(name)  # type: ignore
                 except AttributeError as e:
                     known_colors = f"- {'- '.join(self.colors.list_colors())}"
                     raise AttributeError(
                         f"Attribute '{name}' not found. Did you try and access a color that doesn't exist? Available colors:\n{known_colors}"
                     ) from e
 
-        return self.__getattribute__(name)
+        return self.__getattribute__(name)  # type: ignore
 
     @staticmethod
     def discover(background=False):
@@ -763,10 +756,10 @@ class Tinta(metaclass=_MetaTinta):
         def has_formatting(self) -> bool:
             return self.fmt != self.pln
 
-
-def escape_ansi(line):
-    ansi_escape = re.compile(r"(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]")
-    return ansi_escape.sub("", line)
+    @staticmethod
+    def strip_ansi(s: str) -> str:
+        """A utility method that strips ANSI escape codes from a string, converting a styled string into plaintext."""
+        return re.sub(r"(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]", "", s, re.I, re.M)
 
 
 def esc(string: str, replace: bool = False) -> str:

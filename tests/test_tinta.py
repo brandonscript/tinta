@@ -23,6 +23,7 @@
 from typing import List, Tuple
 
 import pytest
+from pytest import CaptureFixture
 
 # pylint: disable=import-error
 from tinta import Tinta
@@ -82,6 +83,35 @@ class TestColors:
 
     def test_white(self):
         Tinta().white("white").print()
+
+
+class TestLowerLevel:
+
+    ITS_NOT_EASY = "it's not easy being green"
+
+    def assert_its_not_easy_being_green(self, out: str):
+        assert self.ITS_NOT_EASY in out
+        assert "\x1b[38;5;35m" in out
+
+    def test_tint_takes_int_arg0_as_color(self, capfd: CaptureFixture[str]):
+        Tinta().tint(35, self.ITS_NOT_EASY).print()
+        out = capfd.readouterr().out
+        self.assert_its_not_easy_being_green(out)
+
+    def test_tint_takes_str_arg0_as_color(self, capfd: CaptureFixture[str]):
+        Tinta().tint("green", self.ITS_NOT_EASY).print()
+        out = capfd.readouterr().out
+        self.assert_its_not_easy_being_green(out)
+
+    def test_tint_takes_int_color_kwarg(self, capfd: CaptureFixture[str]):
+        Tinta().tint(self.ITS_NOT_EASY, color=35).print()
+        out = capfd.readouterr().out
+        self.assert_its_not_easy_being_green(out)
+
+    def test_tint_takes_str_color_kwarg(self, capfd: CaptureFixture[str]):
+        Tinta().tint(self.ITS_NOT_EASY, color="green").print()
+        out = capfd.readouterr().out
+        self.assert_its_not_easy_being_green(out)
 
 
 class TestEdgeCases:
@@ -253,7 +283,7 @@ class TestComplexStructure:
         )
         assert Tinta(f"A {Tinta().red('hologram').to_str()} is a human's best friend")
 
-    def test_add(self):
+    def test_push(self):
         t = Tinta().push("How long").push("can two people talk about nothing?")
         assert t.get_plaintext() == "How long can two people talk about nothing?"
 
@@ -268,9 +298,9 @@ class TestComplexStructure:
         assert len(t.parts_fmt) == 1
         assert len(t.parts_pln) == 1
 
-    def test_remove(self):
+    def test_pop(self):
         t = Tinta().push("How long").push("can two people talk about nothing?")
-        t.remove()
+        t.pop()
         assert t.get_plaintext() == "How long"
         assert len(t.parts) == 1
         assert len(t.parts_fmt) == 1
@@ -281,7 +311,7 @@ class TestComplexStructure:
             t.push(str(p))
 
         assert len(t.parts) == 10
-        t.remove(10)
+        t.pop(10)
 
         assert len(t.parts) == 0
 
