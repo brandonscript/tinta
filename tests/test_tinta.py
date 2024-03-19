@@ -23,7 +23,6 @@
 from typing import List, Tuple
 
 import pytest
-from pytest import CaptureFixture
 
 # pylint: disable=import-error
 from tinta import Tinta
@@ -93,24 +92,20 @@ class TestLowerLevel:
         assert self.ITS_NOT_EASY in out
         assert "\x1b[38;5;35m" in out
 
-    def test_tint_takes_int_arg0_as_color(self, capfd: CaptureFixture[str]):
-        Tinta().tint(35, self.ITS_NOT_EASY).print()
-        out = capfd.readouterr().out
+    def test_tint_takes_int_arg0_as_color(self):
+        out = Tinta().tint(35, self.ITS_NOT_EASY).to_str()
         self.assert_its_not_easy_being_green(out)
 
-    def test_tint_takes_str_arg0_as_color(self, capfd: CaptureFixture[str]):
-        Tinta().tint("green", self.ITS_NOT_EASY).print()
-        out = capfd.readouterr().out
+    def test_tint_takes_str_arg0_as_color(self):
+        out = Tinta().tint("green", self.ITS_NOT_EASY).to_str()
         self.assert_its_not_easy_being_green(out)
 
-    def test_tint_takes_int_color_kwarg(self, capfd: CaptureFixture[str]):
-        Tinta().tint(self.ITS_NOT_EASY, color=35).print()
-        out = capfd.readouterr().out
+    def test_tint_takes_int_color_kwarg(self):
+        out = Tinta().tint(self.ITS_NOT_EASY, color=35).to_str()
         self.assert_its_not_easy_being_green(out)
 
-    def test_tint_takes_str_color_kwarg(self, capfd: CaptureFixture[str]):
-        Tinta().tint(self.ITS_NOT_EASY, color="green").print()
-        out = capfd.readouterr().out
+    def test_tint_takes_str_color_kwarg(self):
+        out = Tinta().tint(self.ITS_NOT_EASY, color="green").to_str()
         self.assert_its_not_easy_being_green(out)
 
 

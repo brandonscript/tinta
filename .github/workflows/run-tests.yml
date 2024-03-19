@@ -30,7 +30,7 @@ jobs:
       - name: Test with pytest
         run: |
           pip install pytest
-          pytest -xv --capture=tee-sys
+          pytest -xv -s
 
   build-newer-python:
     runs-on: ubuntu-22.04
@@ -54,4 +54,4 @@ jobs:
       - name: Test with pytest
         run: |
           pip install pytest
-          pytest -xv --capture=tee-sys
+          pytest -xv -s
