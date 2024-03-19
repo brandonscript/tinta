@@ -67,7 +67,7 @@ exclude = [".*", "dist"]
 
 [tool.hatchling.dependencies]
 python = "^3.6"
-Deprecated = "^1.2.14"
+deprecated = "^1.2.14"
 
 [tool.hatchling.dev-dependencies]
 pytest = "^6.2.4"
