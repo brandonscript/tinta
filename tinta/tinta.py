@@ -25,7 +25,7 @@ from itertools import zip_longest
 from pathlib import Path
 from typing import Any, cast, List, Optional, overload, Union
 
-from deprecation import deprecated
+from deprecated import deprecated
 
 from .ansi import AnsiColors
 from .colorize import ANSI_RESET_HEX, colorize
