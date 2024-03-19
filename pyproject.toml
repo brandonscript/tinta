@@ -155,7 +155,7 @@ quote-style = "double"
 [tool.pytest.ini_options]
 pythonpath = ["."]
 minversion = "7.0"
-addopts = "-s -rP -vv --color=yes"
+addopts = "-s -rP -x -vv --color=yes"
 testpaths = ["tests"]
 python_files = ["*_test.py", "test_*.py"]
 python_classes = ["test_", "_test", "Test*"]

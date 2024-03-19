@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="1" skipped="0" tests="19" time="0.098" timestamp="2024-03-19T07:55:39.092374" hostname="Stardust.local"><testcase classname="tests.test_discover.TestDiscover" name="test_is_dark_or_light" time="0.001" /><testcase classname="tests.test_discover.TestDiscover" name="test_discover" time="0.003" /><testcase classname="tests.test_tinta.TestInit" name="test_init" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_green" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_red" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_blue" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_light_blue" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_yellow" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_amber" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_olive" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_orange" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_purple" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_pink" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_gray" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_dark_gray" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_light_gray" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_black" time="0.000" /><testcase classname="tests.test_tinta.TestColors" name="test_white" time="0.000" /><testcase classname="tests.test_tinta.TestLowerLevel" name="test_tint_takes_int_arg0_as_color" time="0.001"><failure message="assert &quot;it's not easy being green&quot; in ''&#10; +  where &quot;it's not easy being green&quot; = &lt;test_tinta.TestLowerLevel object at 0x10248ec10&gt;.ITS_NOT_EASY">self = &lt;test_tinta.TestLowerLevel object at 0x10248ec10&gt;, capsys = &lt;_pytest.capture.CaptureFixture object at 0x1024e8400&gt;
+
+    def test_tint_takes_int_arg0_as_color(self, capsys: CaptureFixture[str]):
+        Tinta().tint(35, self.ITS_NOT_EASY).print()
+        out = capsys.readouterr().out
+&gt;       self.assert_its_not_easy_being_green(out)
+
+tests/test_tinta.py:99: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _
+
+self = &lt;test_tinta.TestLowerLevel object at 0x10248ec10&gt;, out = ''
+
+    def assert_its_not_easy_being_green(self, out: str):
+&gt;       assert self.ITS_NOT_EASY in out
+E       assert "it's not easy being green" in ''
+E        +  where "it's not easy being green" = &lt;test_tinta.TestLowerLevel object at 0x10248ec10&gt;.ITS_NOT_EASY
+
+tests/test_tinta.py:93: AssertionError</failure></testcase></testsuite></testsuites>
