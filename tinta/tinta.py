@@ -28,18 +28,12 @@ from typing import Any, cast, List, Optional, overload, Union
 from deprecated import deprecated
 
 from .ansi import AnsiColors
-from .colorize import ANSI_RESET_HEX, colorize
+from .colorize import ANSI_RESET_HEX, colorize, tint
+from .constants import PREFER_PLAINTEXT, SEP, SMART_FIX_PUNCTUATION, STEALTH
 from .discover import discover as _discover
-from .typ import copy_kwargs, MissingColorError, parse_bool, StringType
+from .typ import copy_kwargs, MissingColorError, StringType
 
 config = configparser.ConfigParser()
-
-CURSOR_UP_ONE = "\x1b[1A"
-ERASE_LINE = "\x1b[2K"
-SEP = os.getenv("TINTA_SEPARATOR", " ")
-STEALTH = parse_bool(os.getenv("TINTA_STEALTH", False))
-PREFER_PLAINTEXT = parse_bool(os.getenv("TINTA_PLAINTEXT", False))
-SMART_FIX_PUNCTUATION = parse_bool(os.getenv("TINTA_SMART_FIX_PUNCTUATION", True))
 
 
 class _MetaTinta(type):
@@ -102,11 +96,13 @@ class Tinta(metaclass=_MetaTinta):
         underline() -> self:        Sets segments to underline.
         dim() -> self:              Sets segments to a darker, dimmed color.
         normal() -> self:           Removes all styles.
-        reset() -> self:            Removes all styles and colors.
+        clear() -> self:            Removes all styles and colors.
         line() -> self:             Adds segments on a new line.
-        print():                    Prints the output of a Tinta instance, then resets.
+        print():                    Prints the output of a Tinta instance, then clears.
     """
 
+    _initialized = False
+    _known_colors: dict[str, Any] = {}
     color: Union[int, str]
     colors: AnsiColors
 
@@ -126,8 +122,11 @@ class Tinta(metaclass=_MetaTinta):
         self._prefixes: List[str] = []
 
         # Inject ANSI helper functions
-        for c in vars(self.colors):
-            self._colorizer(c)
+        if not Tinta._initialized:
+            Tinta._known_colors = vars(self.colors)
+            Tinta._initialized = True
+        for c in Tinta._known_colors:
+            self.__setattr__(c, functools.partial(self.tint, c))
 
         if s:
             self.push(*s, sep=sep)
@@ -143,15 +142,6 @@ class Tinta(metaclass=_MetaTinta):
             str: Plaintext string
         """
         return str(self.to_str(plaintext=True))
-
-    def _colorizer(self, c: str):
-        """Generates statically typed color methods
-        based on colors.ini.
-
-        Args:
-            c (str): Method name of color, e.g. 'pink', 'blue'.
-        """
-        self.__setattr__(c, functools.partial(self.tint, c))
 
     def _get_sep(
         self,
@@ -174,7 +164,7 @@ class Tinta(metaclass=_MetaTinta):
 
         s: str = getattr(p, attr)
 
-        next_is_punc = (
+        next_char_is_punc = (
             next_p.pln[0]
             in [
                 ".",
@@ -187,8 +177,9 @@ class Tinta(metaclass=_MetaTinta):
             if fix_punc and next_p and next_p.pln
             else False
         )
-        should_ignore_sep = (
-            next_is_punc
+
+        punc_affects_sep = (
+            next_char_is_punc
             and any(
                 [
                     (len(next_p.pln) == 1),
@@ -198,6 +189,12 @@ class Tinta(metaclass=_MetaTinta):
             if next_p and next_p.pln
             else False
         )
+
+        next_char_is_newline = next_p and next_p.pln.startswith(os.linesep)
+        last_char_is_newline = p.pln.endswith(os.linesep)
+        newline_affects_punc = last_char_is_newline or next_char_is_newline
+
+        should_ignore_sep = punc_affects_sep or newline_affects_punc
 
         if not should_ignore_sep:
             s = f"{s}{self._get_sep(p, next_p, sep)}"
@@ -432,39 +429,7 @@ class Tinta(metaclass=_MetaTinta):
             self
         """
 
-        # color: Optional[Union[str, int]] = None, *s: Any, sep: str = SEP
-
-        # check if the first argument is a known color or valid ANSI code, or comes from kwargs
-        s = args
-        color = kwargs.get("color", None)
-        sep = kwargs.get("sep", SEP)
-        if color is None:
-            if not len(s) > 1:
-                raise AttributeError(
-                    "If no color is specified, tint() requires at least two arguments."
-                )
-            if args and isinstance(args[0], (str, int)):
-                color = s[0]
-                s = s[1:]
-            else:
-                raise AttributeError(
-                    "Could not determine color from arguments. Either pass a color as the first argument, or use the color keyword argument."
-                )
-
-        # if color is numeric integer string, assume it's an ANSI color code
-        if isinstance(color, int) or (isinstance(color, str) and color.isdigit()):
-            self.color = int(color)
-
-        # Check if color_name is a valid color if color is a string
-        if isinstance(color, str):
-            if not hasattr(self.colors, color):  # type: ignore
-                raise MissingColorError(
-                    f"Invalid color name: {color}. Is it in colors.ini?"
-                )
-            self.color = self.colors.get(color)  # type: ignore
-
-        self.push(*s, sep=sep)
-        return self
+        return tint(self, *args, **kwargs)
 
     @overload
     def inspect(self, code: int, name: None = None, throw: bool = False) -> str: ...
@@ -692,7 +657,8 @@ class Tinta(metaclass=_MetaTinta):
                 try:
                     return self.__getattribute__(name)  # type: ignore
                 except AttributeError as e:
-                    known_colors = f"- {'- '.join(self.colors.list_colors())}"
+                    known_colors = "\n - ".join(self.colors.list_colors())
+                    known_colors = f" - {known_colors}"
                     raise AttributeError(
                         f"Attribute '{name}' not found. Did you try and access a color that doesn't exist? Available colors:\n{known_colors}"
                     ) from e
@@ -759,7 +725,21 @@ class Tinta(metaclass=_MetaTinta):
     @staticmethod
     def strip_ansi(s: str) -> str:
         """A utility method that strips ANSI escape codes from a string, converting a styled string into plaintext."""
-        return re.sub(r"(?:\x1B[@-_]|[\x80-\x9F])[0-?]*[ -/]*[@-~]", "", s, re.I, re.M)
+        return re.sub(
+            r"\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])", "", s, re.I | re.M | re.U
+        )
+
+    @classmethod
+    def ljust(cls, s: str, width: int, fillchar: str = " ") -> str:
+        """Returns a string left justified in a field of a specified width, accounting for ansi formatting."""
+        p = cls.strip_ansi(s)
+        return s.replace(p, p.ljust(width, fillchar))
+
+    @classmethod
+    def rjust(cls, s: str, width: int, fillchar: str = " ") -> str:
+        """Returns a string right justified in a field of a specified width, accounting for ansi formatting."""
+        p = cls.strip_ansi(s)
+        return s.replace(p, p.rjust(width, fillchar))
 
 
 def esc(string: str, replace: bool = False) -> str:

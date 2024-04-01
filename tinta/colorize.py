@@ -19,7 +19,13 @@
 # MIT License.
 
 import re
-from typing import List, Optional, Tuple, Union
+from typing import Any, List, Optional, overload, Tuple, TYPE_CHECKING, Union
+
+from .constants import SEP
+from .typ import MissingColorError
+
+if TYPE_CHECKING:
+    from .tinta import Tinta
 
 ANSI_RESET_HEX = "\x1b[0m"
 ANSI_RESET_OCT = "\033[0m"
@@ -146,3 +152,66 @@ def colorize(
         return template.format(_join(*codes), s)
     else:
         return s
+
+
+@overload
+def tint(
+    instance: "Tinta", *s: Any, color: Union[str, int], sep: str = SEP
+) -> "Tinta": ...
+
+
+@overload
+def tint(
+    instance: "Tinta", color: Union[str, int], *s: Any, sep: str = SEP
+) -> "Tinta": ...
+
+
+# pylint: disable=redefined-outer-name
+def tint(instance: "Tinta", *args, **kwargs) -> "Tinta":
+    """Adds segments of text colored with the specified color.
+    Can be used in place of calling named color methods.
+
+    Args:
+        instance (Tinta): The Tinta instance.
+        color (str | int, optional): A color name or ANSI color index. Defaults to first argument.
+        *s: Any: Segments of text to add.
+        sep (str, optional): Used to join strings. Defaults to ' '.
+
+    Returns:
+        self
+    """
+
+    # color: Optional[Union[str, int]] = None, *s: Any, sep: str = SEP
+
+    # check if the first argument is a known color or valid ANSI code, or comes from kwargs
+    self = instance
+    s = args
+    color = kwargs.get("color", None)
+    sep = kwargs.get("sep", SEP)
+    if color is None:
+        if not len(s) > 1:
+            raise AttributeError(
+                "If no color is specified, tint() requires at least two arguments."
+            )
+        if args and isinstance(args[0], (str, int)):
+            color = s[0]
+            s = s[1:]
+        else:
+            raise AttributeError(
+                "Could not determine color from arguments. Either pass a color as the first argument, or use the color keyword argument."
+            )
+
+    # if color is numeric integer string, assume it's an ANSI color code
+    if isinstance(color, int) or (isinstance(color, str) and color.isdigit()):
+        self.color = int(color)
+
+    # Check if color_name is a valid color if color is a string
+    if isinstance(color, str):
+        if not hasattr(self.colors, color):  # type: ignore
+            raise MissingColorError(
+                f"Invalid color name: {color}. Is it in colors.ini?"
+            )
+        self.color = self.colors.get(color)  # type: ignore
+
+    self.push(*s, sep=sep)
+    return self

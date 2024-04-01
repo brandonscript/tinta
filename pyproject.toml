@@ -21,7 +21,7 @@
 
 [project]
 name = "tinta"
-version = "0.1.7b1"
+version = "0.1.7b2"
 description = "Tinta, a magical console output tool."
 authors = [{ name = "Brandon Shelley", email = "brandon@pacificaviator.co" }]
 license = "MIT"

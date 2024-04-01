@@ -98,20 +98,20 @@ t.print(end=GAP)
 # complex formatting
 t = Tinta()
 t.vanilla("vanilla").bold("bold", sep="\n")
-t.reset()
+t.clear()
 t.mint("mint").underline("underline", sep="\n")
-t.reset()
+t.clear()
 t.olive("olive").dim("dim", sep="\n")
 
 t.print(end=GAP)
 
-# reset
+# clear
 t = Tinta()
 t.vanilla("vanilla").bold("bold", sep="\n")
-t.reset("plain text", sep="\n")
+t.clear("plain text", sep="\n")
 t.mint("mint").underline("underline", sep="\n")
 t.olive("olive inherits underline", sep="\n").dim("dim inherits both", sep="\n")
-t.reset("reset clears all", sep="\n")
+t.clear("clear clears all", sep="\n")
 t.amber("so we can start fresh")
 
 t.print(end=GAP)
