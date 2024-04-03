@@ -24,7 +24,6 @@
     "commandCenter.border": "#15202b99"
   },
   "peacock.color": "#61dafb",
-  // "python.testing.pytestArgs": ["-rP -vv --color=yes tests"],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
   "python.testing.cwd": "${workspaceFolder}",

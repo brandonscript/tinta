@@ -22,6 +22,8 @@ from .typ import parse_bool
 
 CURSOR_UP_ONE = "\x1b[1A"
 ERASE_LINE = "\x1b[2K"
+ANSI_RESET_HEX = "\x1b[0m"
+ANSI_RESET_OCT = "\033[0m"
 SEP = os.getenv("TINTA_SEPARATOR", " ")
 STEALTH = parse_bool(os.getenv("TINTA_STEALTH", False))
 PREFER_PLAINTEXT = parse_bool(os.getenv("TINTA_PLAINTEXT", False))

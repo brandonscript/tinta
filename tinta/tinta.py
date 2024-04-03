@@ -28,8 +28,15 @@ from typing import Any, cast, List, Optional, overload, Union
 from deprecated import deprecated
 
 from .ansi import AnsiColors
-from .colorize import ANSI_RESET_HEX, colorize, tint
-from .constants import PREFER_PLAINTEXT, SEP, SMART_FIX_PUNCTUATION, STEALTH
+from .colorize import colorize, ensure_reset, tint, was_reset
+from .constants import (
+    CURSOR_UP_ONE,
+    ERASE_LINE,
+    PREFER_PLAINTEXT,
+    SEP,
+    SMART_FIX_PUNCTUATION,
+    STEALTH,
+)
 from .discover import discover as _discover
 from .typ import copy_kwargs, MissingColorError, StringType
 
@@ -143,6 +150,15 @@ class Tinta(metaclass=_MetaTinta):
         """
         return str(self.to_str(plaintext=True))
 
+    def __str__(self) -> str:
+        """Generates a string representation of the current
+        Tinta instance, colorized.
+
+        Returns:
+            str: Colorized string"""
+
+        return self.to_str()
+
     def _get_sep(
         self,
         p: "Tinta.Part",
@@ -190,7 +206,7 @@ class Tinta(metaclass=_MetaTinta):
             else False
         )
 
-        next_char_is_newline = next_p and next_p.pln.startswith(os.linesep)
+        next_char_is_newline = bool(next_p and next_p.pln.startswith(os.linesep))
         last_char_is_newline = p.pln.endswith(os.linesep)
         newline_affects_punc = last_char_is_newline or next_char_is_newline
 
@@ -205,9 +221,9 @@ class Tinta(metaclass=_MetaTinta):
 
         if next_p is None and p.has_formatting:
             if attr == "fmt":
-                s += ANSI_RESET_HEX
+                s = ensure_reset(s)
             elif attr == "esc":
-                s += esc(ANSI_RESET_HEX)
+                s = esc(ensure_reset(s))
 
         return s
 
@@ -628,6 +644,10 @@ class Tinta(metaclass=_MetaTinta):
             return
 
         use_plaintext = True if plaintext or PREFER_PLAINTEXT else False
+        s = self.to_str(sep=sep, plaintext=use_plaintext)
+        # if s.strip() does not end with reset, add it after the last non-whitespace character
+        if not use_plaintext and not was_reset(s):
+            s = ensure_reset(s)
         print(
             self.to_str(sep=sep, plaintext=use_plaintext),
             end=end,
@@ -637,7 +657,6 @@ class Tinta(metaclass=_MetaTinta):
 
         self.clear()
         self._parts = []
-        print("\033[0m", end="", file=file, flush=flush)
 
     def __getattr__(self, name: str) -> "Tinta":
         """Returns a tinted segment of text.
@@ -732,14 +751,14 @@ class Tinta(metaclass=_MetaTinta):
     @classmethod
     def ljust(cls, s: str, width: int, fillchar: str = " ") -> str:
         """Returns a string left justified in a field of a specified width, accounting for ansi formatting."""
-        p = cls.strip_ansi(s)
-        return s.replace(p, p.ljust(width, fillchar))
+        chars_to_add = width - len(cls.strip_ansi(s))
+        return f"{s}{str(fillchar or '') * chars_to_add}"
 
     @classmethod
     def rjust(cls, s: str, width: int, fillchar: str = " ") -> str:
         """Returns a string right justified in a field of a specified width, accounting for ansi formatting."""
-        p = cls.strip_ansi(s)
-        return s.replace(p, p.rjust(width, fillchar))
+        chars_to_add = width - len(cls.strip_ansi(s))
+        return f"{str(fillchar or '') * chars_to_add}{s}"
 
 
 def esc(string: str, replace: bool = False) -> str:

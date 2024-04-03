@@ -20,14 +20,33 @@
 # shall take precedence.
 
 
+import re
 from typing import Any, Callable, List, Tuple
 
 import pytest
+from pytest import CaptureFixture
 
 # pylint: disable=import-error
 from tinta import Tinta
 
 Tinta.load_colors("examples/colors.ini")
+
+O = "\x1b[0m"
+GREEN = "\x1b[38;5;35m"
+RED = "\x1b[38;5;1m"
+BLUE = "\x1b[38;5;32m"
+L_BLUE = "\x1b[38;5;37m"
+YELLOW = "\x1b[38;5;214m"
+AMBER = "\x1b[38;5;208m"
+MINT = "\x1b[38;5;43m"
+OLIVE = "\x1b[38;5;106m"
+ORANGE = "\x1b[38;5;166m"
+PURPLE = "\x1b[38;5;18m"
+PINK = "\x1b[38;5;197m"
+GRAY = "\x1b[38;5;243m"
+D_GRAY = "\x1b[38;5;235m"
+L_GRAY = "\x1b[38;5;248m"
+WHITE = "\x1b[38;5;255m"
 
 
 class TestInit:
@@ -42,24 +61,24 @@ class TestBasicColorizing:
         "color,Testa,expected",
         [
             # fmt: off
-            ("green", lambda: Tinta().green("green"), "\x1b[38;5;35mgreen\x1b[0m"),
-            ("green", lambda: Tinta().tint(35, "green"), "\x1b[38;5;35mgreen\x1b[0m"),
-            ("green", lambda: Tinta().tint("green", "green"), "\x1b[38;5;35mgreen\x1b[0m"),
-            ("red", lambda: Tinta().red("red"), "\x1b[38;5;1mred\x1b[0m"),
-            ("blue", lambda: Tinta().blue("blue"), "\x1b[38;5;32mblue\x1b[0m"),
-            ("blue", lambda: Tinta().blue("Green"), "\x1b[38;5;32mGreen\x1b[0m"),
-            ("light_blue", lambda: Tinta().light_blue("light_blue"), "\x1b[38;5;37mlight_blue\x1b[0m"),
-            ("yellow", lambda: Tinta().yellow("yellow"), "\x1b[38;5;214myellow\x1b[0m"),
-            ("amber", lambda: Tinta().amber("amber"), "\x1b[38;5;208mamber\x1b[0m"),
-            ("olive", lambda: Tinta().olive("olive"), "\x1b[38;5;106molive\x1b[0m"),
-            ("orange", lambda: Tinta().orange("orange"), "\x1b[38;5;166morange\x1b[0m"),
-            ("purple", lambda: Tinta().purple("purple"), "\x1b[38;5;18mpurple\x1b[0m"),
-            ("pink", lambda: Tinta().pink("pink"), "\x1b[38;5;197mpink\x1b[0m"),
-            ("gray", lambda: Tinta().gray("gray"), "\x1b[38;5;243mgray\x1b[0m"),
-            ("dark_gray", lambda: Tinta().dark_gray("dark_gray"), "\x1b[38;5;235mdark_gray\x1b[0m"),
-            ("light_gray", lambda: Tinta().light_gray("light_gray"), "\x1b[38;5;248mlight_gray\x1b[0m"),
-            ("white", lambda: Tinta().white("white"), "\x1b[38;5;255mwhite\x1b[0m"),
-            ("mint", lambda: Tinta().mint("Mint"), "\x1b[38;5;84mMint\x1b[0m")
+            ("green", lambda: Tinta().green("green"), f"{GREEN}green{O}"),
+            ("green", lambda: Tinta().tint(35, "green"), f"{GREEN}green{O}"),
+            ("green", lambda: Tinta().tint("green", "green"), f"{GREEN}green{O}"),
+            ("red", lambda: Tinta().red("red"), f"{RED}red{O}"),
+            ("blue", lambda: Tinta().blue("blue"), f"{BLUE}blue{O}"),
+            ("blue", lambda: Tinta().blue("Green"), f"{BLUE}Green{O}"),
+            ("light_blue", lambda: Tinta().light_blue("light_blue"), f"{L_BLUE}light_blue{O}"),
+            ("yellow", lambda: Tinta().yellow("yellow"), f"{YELLOW}yellow{O}"),
+            ("amber", lambda: Tinta().amber("amber"), f"{AMBER}amber{O}"),
+            ("mint", lambda: Tinta().mint("Mint"), f"{MINT}Mint{O}"),
+            ("olive", lambda: Tinta().olive("olive"), f"{OLIVE}olive{O}"),
+            ("orange", lambda: Tinta().orange("orange"), f"{ORANGE}orange{O}"),
+            ("purple", lambda: Tinta().purple("purple"), f"{PURPLE}purple{O}"),
+            ("pink", lambda: Tinta().pink("pink"), f"{PINK}pink{O}"),
+            ("gray", lambda: Tinta().gray("gray"), f"{GRAY}gray{O}"),
+            ("dark_gray", lambda: Tinta().dark_gray("dark_gray"), f"{D_GRAY}dark_gray{O}"),
+            ("light_gray", lambda: Tinta().light_gray("light_gray"), f"{L_GRAY}light_gray{O}"),
+            ("white", lambda: Tinta().white("white"), f"{WHITE}white{O}"),
             # fmt: on
         ],
     )
@@ -71,37 +90,46 @@ class TestBasicColorizing:
 class TestChaining:
 
     @pytest.mark.parametrize(
-        "test_case, kwargs, expected",
+        "Testa, kwargs, expected",
         [
             # fmt: off
-            (Tinta().green("green").red("red").blue("blue"), {"sep":"", "plaintext":True}, "greenredblue"),
-            (Tinta().green("green").red("red").blue("blue"), {"plaintext": True}, "green red blue"),
-            (Tinta().green("green").red("red").blue("blue"), {"sep": ""}, "\x1b[38;5;35mgreen\x1b[38;5;1mred\x1b[38;5;32mblue\x1b[0m"),
-            (Tinta().green("green").red("red").blue("blue"), {}, "\x1b[38;5;35mgreen \x1b[38;5;1mred \x1b[38;5;32mblue\x1b[0m"),
+            (lambda: Tinta().green("green").red("red").blue("blue"), {"sep":"", "plaintext":True}, "greenredblue"),
+            (lambda: Tinta().green("green").red("red").blue("blue"), {"plaintext": True}, "green red blue"),
+            (lambda: Tinta().green("green").red("red").blue("blue"), {"sep": ""}, f"{GREEN}green{RED}red{BLUE}blue{O}"),
+            (lambda: Tinta().green("green").red("red").blue("blue"), {}, f"{GREEN}green {RED}red {BLUE}blue{O}"),
+            (lambda: Tinta().green("green").red("red").blue("blue "), {}, f"{GREEN}green {RED}red {BLUE}blue{O} "),
+            (lambda: Tinta().green("green").red("red").blue("blue \n"), {}, f"{GREEN}green {RED}red {BLUE}blue{O} \n"),
+            (lambda: Tinta().green("green").red("red").blue("blue").clear(), {}, f"{GREEN}green {RED}red {BLUE}blue{O}"),
             # fmt: on
         ],
     )
     def test_chaining_resets_correctly(
-        self, test_case: Tinta, kwargs: dict[str, Any], expected: str
+        self,
+        Testa: Callable,
+        kwargs: dict[str, Any],
+        expected: str,
+        capfd: CaptureFixture[str],
     ):
-        s = test_case.to_str(**kwargs)
-        test_case.print(**kwargs)
+        s = Testa().to_str(**kwargs)
+        Testa().print(**kwargs)
         assert s == expected
+        out = capfd.readouterr().out
+        assert out == f"{expected}\n"
 
     @pytest.mark.parametrize(
         "Testa,expected",
         [
             (
                 lambda: Tinta().mint("Mint\nice cream"),
-                "\x1b[38;5;84mMint\nice cream\x1b[0m",
+                f"{MINT}Mint\nice cream{O}",
             ),
             (
                 lambda: Tinta().mint("Mint").white("\nice cream\nis the")._("\nbest"),
-                "\x1b[38;5;84mMint\x1b[38;5;255m\nice cream\nis the\x1b[38;5;255;4m\nbest\x1b[0m",
+                f"{MINT}Mint{WHITE}\nice cream\nis the\x1b[38;5;255;4m\nbest{O}",
             ),
             (
                 lambda: Tinta("\n").mint("Mint\n").white("ice cream is the")._("best"),
-                "\n\x1b[38;5;84mMint\n\x1b[38;5;255mice cream is the \x1b[38;5;255;4mbest\x1b[0m",
+                f"\n{MINT}Mint\n{WHITE}ice cream is the \x1b[38;5;255;4mbest{O}",
             ),
         ],
     )
@@ -115,16 +143,14 @@ class TestUnicode:
 
     def test_unicode(self):
         Tinta().pink("I ♡ Unicorns").print()
-        assert (
-            Tinta().pink("I ♡ Unicorns").to_str() == "\x1b[38;5;197mI ♡ Unicorns\x1b[0m"
-        )
+        assert Tinta().pink("I ♡ Unicorns").to_str() == f"{PINK}I ♡ Unicorns{O}"
 
     def test_box_drawing(self):
         s = f"┌{'─'*14}┐\n│ I ♡ Unicorns │\n└{'─'*14}┘"
         Tinta("\n").mint(s).print()
         assert (
             Tinta().mint(s).to_str()
-            == f"\x1b[38;5;84m┌──────────────┐\n│ I ♡ Unicorns │\n└──────────────┘\x1b[0m"
+            == f"{MINT}┌──────────────┐\n│ I ♡ Unicorns │\n└──────────────┘{O}"
         )
 
     def test_emoji(self):
@@ -133,20 +159,17 @@ class TestUnicode:
 
     def test_emoji_with_color(self):
         Tinta().purple("🦄").print()
-        assert Tinta().purple("🦄").to_str() == "\x1b[38;5;18m🦄\x1b[0m"
+        assert Tinta().purple("🦄").to_str() == f"{PURPLE}🦄{O}"
 
     def test_emoji_with_color_and_clear(self):
         Tinta().pink("🦄").clear("🦄").print()
-        assert (
-            Tinta().pink("🦄").clear("🦄").to_str(sep="")
-            == "\x1b[38;5;197m🦄\x1b[0m🦄\x1b[0m"
-        )
+        assert Tinta().pink("🦄").clear("🦄").to_str(sep="") == f"{PINK}🦄\x1b[0m🦄{O}"
 
     def test_emoji_with_color_and_clear_and_emoji(self):
         Tinta().purple("🦄").clear("🦄").pink("🦄").print()
         assert (
             Tinta().purple("🦄").clear("🦄").pink("🦄").to_str()
-            == "\x1b[38;5;18m🦄 \x1b[0m🦄 \x1b[38;5;197m🦄\x1b[0m"
+            == f"{PURPLE}🦄 \x1b[0m🦄 {PINK}🦄{O}"
         )
 
 
@@ -156,7 +179,7 @@ class TestLowerLevel:
 
     def assert_its_not_easy_being_green(self, out: str):
         assert self.ITS_NOT_EASY in out
-        assert "\x1b[38;5;35m" in out
+        assert f"{GREEN}" in out
 
     def test_tint_takes_int_arg0_as_color(self):
         out = Tinta().tint(35, self.ITS_NOT_EASY).to_str()
@@ -191,19 +214,148 @@ class TestEdgeCases:
     def test_print_empty_str(self):
         Tinta("").print()
 
-    def test_print_whitespace(self):
-        Tinta(" ").print()
-
     def test_print_none(self):
         Tinta(None).print()
 
     def test_tint_color_0(self):
         Tinta().tint(0, "Zero").print()
 
+
+class TestWhiteSpace:
+
+    def test_print_whitespace(self):
+        Tinta(" ").print()
+
+    whitespace_cases = [
+        (lambda: Tinta("Hello\nWorld"), "Hello\nWorld"),
+        (lambda: Tinta("\nHello\nWorld"), "\nHello\nWorld"),
+        (lambda: Tinta("\nHello\nWorld\n"), "\nHello\nWorld\n"),
+        (lambda: Tinta("\nHello\nWorld\n\n"), "\nHello\nWorld\n\n"),
+        (lambda: Tinta("Hello\nWorld\n"), "Hello\nWorld\n"),
+        (lambda: Tinta("Hello World\n"), "Hello World\n"),
+        (lambda: Tinta("Hello World"), "Hello World"),
+        (lambda: Tinta("Hello World "), "Hello World "),
+        (lambda: Tinta(" Hello World "), " Hello World "),
+        (lambda: Tinta(" Hello World"), " Hello World"),
+        (lambda: Tinta("  Hello World"), "  Hello World"),
+        (lambda: Tinta("  Hello World "), "  Hello World "),
+        (lambda: Tinta("  Hello World  "), "  Hello World  "),
+        (lambda: Tinta(" Hello World\n"), " Hello World\n"),
+        (lambda: Tinta(" Hello World\n "), " Hello World\n "),
+        (lambda: Tinta(" Hello World\n  "), " Hello World\n  "),
+        (lambda: Tinta(" Hello World\n\n"), " Hello World\n\n"),
+        (lambda: Tinta(" Hello World\n\n "), " Hello World\n\n "),
+        (lambda: Tinta("\nHello World \n"), "\nHello World \n"),
+        (lambda: Tinta("\nHello World \n "), "\nHello World \n "),
+        (lambda: Tinta("\n Hello World \n\n"), "\n Hello World \n\n"),
+        (lambda: Tinta("\n Hello\n World \n"), "\n Hello\n World \n"),
+    ]
+
+    @pytest.mark.parametrize(
+        "Testa,expected",
+        whitespace_cases,
+    )
+    def test_uncolored_respects_whitespace(
+        self, Testa: Callable[[], Tinta], expected: str, capfd: CaptureFixture[str]
+    ):
+        s = Testa().to_str()
+        assert s == expected
+        Testa().print()
+        out = capfd.readouterr().out
+        assert out == f"{expected}\n"
+
+    @pytest.mark.parametrize(
+        "Testa,expected",
+        whitespace_cases,
+    )
+    def test_uncolored_plaintext_respects_whitespace(
+        self, Testa: Callable[[], Tinta], expected: str, capfd: CaptureFixture[str]
+    ):
+        p = Testa().to_str(plaintext=True)
+        assert p == expected
+        Testa().print(plaintext=True)
+        out = capfd.readouterr().out
+        assert out == f"{expected}\n"
+
+    @pytest.mark.parametrize(
+        "Testa,expected",
+        whitespace_cases,
+    )
+    def test_proxy_color_to_str_respects_whitespace(
+        self, Testa: Callable[[], Tinta], expected: str, capfd: CaptureFixture[str]
+    ):
+        s = Testa().to_str()
+        found = re.search(r"\s+$", expected)
+        trail_ws = found.group() if found else ""
+        _expected = f"{PURPLE}{expected.rstrip()}{O}{trail_ws}"
+        #                                         ^^^^^^^^^^^^^
+        # Reset ANSI char is always placed before trailing whitespace
+        assert Tinta().purple(s).to_str() == _expected
+        Tinta().purple(s).print()
+        out = capfd.readouterr().out
+        assert out == f"{_expected}\n"
+
+    @pytest.mark.parametrize(
+        "Testa,expected",
+        whitespace_cases,
+    )
+    def test_proxy_color_to_plaintext_respects_whitespace(
+        self, Testa: Callable[[], Tinta], expected: str, capfd: CaptureFixture[str]
+    ):
+        p = Testa().to_str(plaintext=True)
+        assert Tinta().purple(p).to_str(plaintext=True) == expected
+        Tinta().purple(p).print(plaintext=True)
+        out = capfd.readouterr().out
+        assert out == f"{expected}\n"
+
+    @pytest.mark.parametrize(
+        "Testa,expected",
+        whitespace_cases,
+    )
+    def test_proxy_color_chain_to_str_respects_whitespace(
+        self, Testa: Callable[[], Tinta], expected: str, capfd: CaptureFixture[str]
+    ):
+        s = Testa().to_str()
+        found = re.search(r"\s+$", expected)
+        trail_ws = found.group() if found else ""
+        expected_purple = f"{PURPLE}{expected}"
+        expected_pink = f"{PINK}{expected.rstrip()}{O}{trail_ws}"
+        l_or_r_newline = expected.startswith("\n") or expected.endswith("\n")
+        sep = "" if l_or_r_newline else " "
+        # ^ If there is a newline at the end of the current or start of the next segment,
+        #   Tinta will ignore the separator
+        assert (
+            Tinta().purple(s).pink(s).to_str()
+            == f"{expected_purple}{sep}{expected_pink}"
+        )
+        Tinta().purple(s).pink(s).print()
+        out = capfd.readouterr().out
+        assert out == f"{expected_purple}{sep}{expected_pink}\n"
+
+    @pytest.mark.parametrize(
+        "Testa,expected",
+        whitespace_cases,
+    )
+    def test_proxy_color_chain_to_plaintext_respects_whitespace(
+        self, Testa: Callable[[], Tinta], expected: str, capfd: CaptureFixture[str]
+    ):
+        p = Testa().to_str(plaintext=True)
+        l_or_r_newline = expected.startswith("\n") or expected.endswith("\n")
+        sep = "" if l_or_r_newline else " "
+        # ^ If there is a newline at the end of the current or start of the next segment,
+        #   Tinta will ignore the separator
+        assert (
+            Tinta().purple(p).pink(p).to_str(plaintext=True)
+            == f"{expected}{sep}{expected}"
+        )
+        Tinta().purple(p).pink(p).print(plaintext=True)
+        out = capfd.readouterr().out
+        assert out == f"{expected}{sep}{expected}\n"
+
     def test_sep_inherits_prev_part_color(self):
         assert (
             Tinta().red("Red").green("Green").blue("Blue").to_str(sep=";")
-            == "\x1b[38;5;1mRed;\x1b[38;5;35mGreen;\x1b[38;5;32mBlue\x1b[0m"
+            == f"{RED}Red;{GREEN}Green;{BLUE}Blue{O}"
         )
 
 
@@ -211,34 +363,28 @@ class TestMultipleInstances:
 
     def test_same_instance_chains_to_str(self):
         t = Tinta()
-        red = "\x1b[38;5;1mRed"
-        green = "\x1b[38;5;35mGreen"
-        blue = "\x1b[38;5;32mBlue"
-        assert t.red("Red").to_str() == f"{red}\x1b[0m"
-        assert t.green("Green").to_str() == f"{red} {green}\x1b[0m"
-        assert t.blue("Blue").to_str() == f"{red} {green} {blue}\x1b[0m"
+        red = f"{RED}Red"
+        green = f"{GREEN}Green"
+        blue = f"{BLUE}Blue"
+        assert t.red("Red").to_str() == f"{red}{O}"
+        assert t.green("Green").to_str() == f"{red} {green}{O}"
+        assert t.blue("Blue").to_str() == f"{red} {green} {blue}{O}"
 
     def test_same_instance_resets_after_print(self):
         t = Tinta()
-        red = "\x1b[38;5;1mRed"
-        green = "\x1b[38;5;35mGreen"
-        blue = "\x1b[38;5;32mBlue"
-        assert t.red("Red").to_str() == f"{red}\x1b[0m"
+        assert t.red("Red").to_str() == f"{RED}Red{O}"
         t.print()
-        assert t.green("Green").to_str() == f"{green}\x1b[0m"
+        assert t.green("Green").to_str() == f"{GREEN}Green{O}"
         t.print()
-        assert t.blue("Blue").to_str() == f"{blue}\x1b[0m"
+        assert t.blue("Blue").to_str() == f"{BLUE}Blue{O}"
 
     def test_multiple_instances_dont_interfere(self):
         t1 = Tinta()
         t2 = Tinta()
         t3 = Tinta()
-        red = "\x1b[38;5;1mRed"
-        green = "\x1b[38;5;35mGreen"
-        blue = "\x1b[38;5;32mBlue"
-        assert t1.red("Red").to_str() == f"{red}\x1b[0m"
-        assert t2.green("Green").to_str() == f"{green}\x1b[0m"
-        assert t3.blue("Blue").to_str() == f"{blue}\x1b[0m"
+        assert t1.red("Red").to_str() == f"{RED}Red{O}"
+        assert t2.green("Green").to_str() == f"{GREEN}Green{O}"
+        assert t3.blue("Blue").to_str() == f"{BLUE}Blue{O}"
 
 
 # @pytest.mark.skip
@@ -273,7 +419,7 @@ class TestFeatures:
                 .red(" *** Important : Smart fix punctuation should work with")
                 .green("ANSI")
                 .red(", as well as plaintext."),
-                "\x1b[38;5;1m *** Important : Smart fix punctuation should work with \x1b[38;5;35mANSI\x1b[38;5;1m, as well as plaintext.\x1b[0m",
+                f"{RED} *** Important : Smart fix punctuation should work with {GREEN}ANSI{RED}, as well as plaintext.{O}",
             ),
         ],
     )
@@ -421,38 +567,91 @@ class TestComplexStructure:
             .to_str(sep=" ")
         )
         print(s)
-        assert (
-            s
-            == "White \x1b[38;5;1mRed \x1b[38;5;35mGreen \x1b[38;5;32mBlue \x1b[0mClear\x1b[0m"
-        )
+        assert s == f"White {RED}Red {GREEN}Green {BLUE}Blue {O}Clear{O}"
 
 
 class TestUtils:
 
     @pytest.mark.parametrize(
-        "test_str,expected",
+        "Testa,expected",
         [
-            (Tinta().blue("blue").to_str(), "blue"),
-            (Tinta().red("red").to_str(), "red"),
-            (Tinta().green("green").to_str(), "green"),
-            (Tinta().yellow("yellow").to_str(), "yellow"),
-            (Tinta().pink("🦄").to_str(), "🦄"),
+            # fmt: off
+            (lambda: Tinta().blue("blue"), "blue"),
+            (lambda: Tinta().red("red"), "red"),
+            (lambda: Tinta().green("green"), "green"),
+            (lambda: Tinta().yellow("yellow"), "yellow"),
+            (lambda: Tinta().pink("🦄"), "🦄"),
+            # fmt: on
             (
-                Tinta()
+                lambda: Tinta()
                 .pink("Pink unicorns 🦄")
-                .purple("are as good as purple 🦄 ones")
-                .to_str(),
+                .purple("are as good as purple 🦄 ones"),
                 "Pink unicorns 🦄 are as good as purple 🦄 ones",
             ),
             (
-                Tinta()
+                lambda: Tinta()
                 .purple("Hello purple world!")
                 .clear("I've got a song to sing about")
-                ._("unicorns 🦄")
-                .to_str(),
+                ._("unicorns 🦄"),
                 "Hello purple world! I've got a song to sing about unicorns 🦄",
             ),
         ],
     )
-    def test_strip_ansi(self, test_str: str, expected: str):
-        assert Tinta.strip_ansi(test_str) == expected
+    def test_strip_ansi(self, Testa: Callable, expected: str):
+        assert Tinta.strip_ansi(Testa().to_str()) == expected
+
+    @pytest.mark.parametrize(
+        "Testa, ljust, fillchar, expected",
+        [
+            # fmt: off
+            (lambda: Tinta().mint("🦄"), 10, " ", f"{MINT}🦄{O}         "),
+            (lambda: Tinta().mint("I love unicorns and magical fruit"), 10, " ", f"{MINT}I love unicorns and magical fruit{O}"),
+            (lambda: Tinta("ljust"), 13, "-", f"ljust{'-'*8}"),
+            # fmt: on
+            (
+                lambda: Tinta("Wild")
+                .purple("unicorns")
+                .pink("like their")
+                .mint("space"),
+                20,
+                " ",
+                f"Wild {PURPLE}unicorns {PINK}like their {MINT}space{O}",
+            ),
+            (
+                lambda: Tinta("a").purple("b").pink("c d").mint("e "),
+                80,
+                " ",
+                f"a {PURPLE}b {PINK}c d {MINT}e{O} {' '*70}",
+            ),
+        ],
+    )
+    def test_ljust(self, Testa: Callable, ljust: int, fillchar: str, expected: str):
+        assert Tinta.ljust(Testa().to_str(), ljust, fillchar) == expected
+
+    @pytest.mark.parametrize(
+        "Testa, rjust, fillchar, expected",
+        [
+            # fmt: off
+            (lambda: Tinta().mint("🦄"), 10, " ", f"         {MINT}🦄{O}"),
+            (lambda: Tinta().mint("I love unicorns and magical fruit"), 10, " ", f"{MINT}I love unicorns and magical fruit{O}"),
+            (lambda: Tinta("rjust"), 13, "-", f"{'-'*8}rjust"),
+            # fmt: on
+            (
+                lambda: Tinta("Wild")
+                .purple("unicorns")
+                .pink("like their")
+                .mint("space"),
+                20,
+                " ",
+                f"Wild {PURPLE}unicorns {PINK}like their {MINT}space{O}",
+            ),
+            (
+                lambda: Tinta(" a").purple("b").pink("c d").mint("e"),
+                80,
+                " ",
+                f"{' '*70} a {PURPLE}b {PINK}c d {MINT}e{O}",
+            ),
+        ],
+    )
+    def test_rjust(self, Testa: Callable, rjust: int, fillchar: str, expected: str):
+        assert Tinta.rjust(Testa().to_str(), rjust, fillchar) == expected

@@ -21,14 +21,11 @@
 import re
 from typing import Any, List, Optional, overload, Tuple, TYPE_CHECKING, Union
 
-from .constants import SEP
+from .constants import ANSI_RESET_HEX, ANSI_RESET_OCT, SEP
 from .typ import MissingColorError
 
 if TYPE_CHECKING:
     from .tinta import Tinta
-
-ANSI_RESET_HEX = "\x1b[0m"
-ANSI_RESET_OCT = "\033[0m"
 
 STYLES = (
     "none",
@@ -42,6 +39,17 @@ STYLES = (
     "concealed",
     "crossed",
 )
+
+
+def was_reset(s: str) -> bool:
+    return s.strip().endswith(ANSI_RESET_HEX) or s.endswith(ANSI_RESET_OCT)
+
+
+def ensure_reset(s: str) -> str:
+    if was_reset(s):
+        return s
+    last_char_idx = len(s.rstrip())
+    return f"{s[:last_char_idx]}{ANSI_RESET_HEX}{s[last_char_idx:]}"
 
 
 def _parse_rgb(s: str) -> Tuple[int, ...]:
