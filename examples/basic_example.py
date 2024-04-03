@@ -29,119 +29,140 @@ import time
 from pathlib import Path
 
 sys.path.append(str(Path().cwd().parent / "tinta"))
-# pylint: disable=wrong-import-position, wrong-import-order, import-error
-from tinta import Tinta  # noqa: E402
 
-# End import shim
 
-Tinta.load_colors("examples/colors.ini")
+def basic():
+    # pylint: disable=wrong-import-position, wrong-import-order, import-error
+    from tinta import Tinta  # noqa: E402
 
-# The most basic example we can get.
-Tinta("That's a really nice car!").print()
+    # End import shim
 
-# Prints the entire string in red.
-Tinta().red("That's a really nice red car!").print()
+    Tinta.load_colors("examples/colors.ini")
 
-# Prints the first half in blue, then the rest in red.
-Tinta().blue("That's a cool blue car").red("but not as cool as my red one").print()
+    # The most basic example we can get.
+    Tinta("That's a really nice car!").print()
 
-# Prints the first few words in green, separated by _*_,
-# then the final word in purple.
-Tinta().green(
-    "Sometimes", "We", "Want", "To", "Join", "Words", "Differently", sep=" * "
-).purple("Neat!").print()
+    # Prints the entire string in red.
+    Tinta().red("That's a really nice red car!").print()
 
-# Here we underline a word.
-Tinta().gray("It's").underline("really").normal(
-    "important to be able to style things."
-).print()
+    # Prints the first half in blue, then the rest in red.
+    Tinta().blue("That's a cool blue car").red("but not as cool as my red one").print()
 
-# Here we tried to print in pink, but used the plaintext arg in print.
-# You'll notice we still support Python's multiline \ feature.
-Tinta().pink(
-    "But it's equally important to be able " "to print things in plaintext, too"
-).print(plaintext=True)
+    # Prints the first few words in green, separated by _*_,
+    # then the final word in purple.
+    Tinta().green(
+        "Sometimes", "We", "Want", "To", "Join", "Words", "Differently", sep=" * "
+    ).purple("Neat!").print()
 
-# Let's try some f-strings.
-animal = "Tiger"
-Tinta().orange(f"Hey, we support f-strings, too! Raaarrr, said Ms. {animal}.")
+    # Here we underline a word.
+    Tinta().gray("It's").underline("really").normal(
+        "important to be able to style things."
+    ).print()
 
-# And dimming some text.
-Tinta().blue("We can").dim("dim").normal("things").print()
+    # Here we tried to print in pink, but used the plaintext arg in print.
+    # You'll notice we still support Python's multiline \ feature.
+    Tinta().pink(
+        "But it's equally important to be able " "to print things in plaintext, too"
+    ).print(plaintext=True)
 
-# Things getting out of hand? You can break them up easily in multiple
-# lines, without having to fiddle with \.
-tint = Tinta()
-tint.push("Sometimes we need to")
-tint.pink("break up long lines of text")
-tint.gray("to make them easier to read.")
-tint.line("We can even write to a new line!")
-tint.print()
+    # Let's try some f-strings.
+    animal = "Tiger"
+    Tinta().orange(f"Hey, we support f-strings, too! Raaarrr, said Ms. {animal}.")
 
-# You could do the same using multiple segments, or ()
-Tinta().vanilla(
-    "I like ice cream", "it comes in all sorts" "of great and yummy flavors."
-).print()
+    # And dimming some text.
+    Tinta().blue("We can").dim("dim").normal("things").print()
 
-(Tinta().vanilla("I like ice cream").red("especially with cherries on top.").print())
+    # Things getting out of hand? You can break them up easily in multiple
+    # lines, without having to fiddle with \.
+    tint = Tinta()
+    tint.push("Sometimes we need to")
+    tint.pink("break up long lines of text")
+    tint.gray("to make them easier to read.")
+    tint.nl("We can even write to a new line!")
+    tint.print()
 
-# When you're done printing, Tinta resets itself, but you can still
-# reuse the original variable.
-tint.push("After a print, Tinta resets itself").green()
-tint.line("but you can still use the same initialized version.")
-tint.print()
+    # You could do the same using multiple segments, or ()
+    Tinta().vanilla(
+        "I like ice cream", "it comes in all sorts" "of great and yummy flavors."
+    ).print()
 
-# Using native print()'s built-in end, we can terminate a string
-# without a newline.
-Tinta("And of course as always,").print(end="")
-Tinta(" you can print with end=''").print()
+    (
+        Tinta()
+        .vanilla("I like ice cream")
+        .red("especially with cherries on top.")
+        .print()
+    )
 
-# Not enough colors in config.yaml? Add your own on the fly!
-Tinta(
-    "Did you know, you can", "write with ansi codes directly, too?", color=127
-).print()
+    # When you're done printing, Tinta resets itself, but you can still
+    # reuse the original variable.
+    tint.push("After a print, Tinta resets itself").green()
+    tint.nl("but you can still use the same initialized version.")
+    tint.print()
 
-# Have some fun with separators.
-Tinta("A bird", "I like birds", sep="; ").push(
-    "And also cats", "and dogs", sep=" "
-).print(sep="\n")
+    # Using native print()'s built-in end, we can terminate a string
+    # without a newline.
+    Tinta("And of course as always,").print(end="")
+    Tinta(" you can print with end=''").print()
 
-# You could get really fancy and inject some formatted text in the middle,
-# using f-strings.
-(
-    Tinta()
-    .mint("Fate.")
-    .dark_gray("It protects")
-    .underline()
-    .blue(f"fools{Tinta().normal().dark_gray(',').to_str()}", sep="")
-    .normal()
-    .pink("little children,")
-    .dark_gray("and ships named")
-    .purple("Enterprise.")
-    .print()
-)
+    # Not enough colors in config.yaml? Add your own on the fly!
+    Tinta(
+        "Did you know, you can", "write with ansi codes directly, too?", color=127
+    ).print()
 
-# Tinta is also smart about how we join things together. If you join
-# several objects together, it collapses repeated whitespace. You
-# can also use 'sep' to force sections to collapse.
-t = (
-    Tinta()
-    .pink("A section")
-    .push()
-    .white()
-    .blue("of text", sep="")
-    .green(",")
-    .push()
-    .purple("separated.")
-)
-t.print()
+    # Get the string representation of the Tinta object with to_str().
+    Tinta("Sometimes you just want to get the string").to_str()
+    Tinta().purple("Which").pink("is").green("pretty").blue("cool").to_str()
+    Tinta().vanilla("If you need it in plaintext, you can do that, too.").to_str(
+        plaintext=True
+    )
+    t = Tinta().mint("⭐like this⭐")
+    print(f"You can also use a Tinta object in an f-string directly, {t}")
 
-# And finally, you can use some helper tools to clear the current
-# console and move up a line.
-Tinta().yellow("Loading...").print()
-time.sleep(1)
-Tinta.clearline()
-Tinta().green("Done").print()
-time.sleep(1)
-Tinta.up()
-Tinta().green("Done :)").print()
+    # Have some fun with separators.
+    Tinta("A bird", "I like birds", sep="; ").push(
+        "And also cats", "and dogs", sep=" "
+    ).print(sep="\n")
+
+    # You could get really fancy and inject some formatted text in the middle,
+    # using f-strings.
+    (
+        Tinta()
+        .mint("Fate.")
+        .dark_gray("It protects")
+        .underline()
+        .blue(f"fools{Tinta().normal().dark_gray(',').to_str()}", sep="")
+        .normal()
+        .pink("little children,")
+        .dark_gray("and ships named")
+        .purple("Enterprise.")
+        .print()
+    )
+
+    # Tinta is also smart about how we join things together. If you join
+    # several objects together, it collapses repeated whitespace. You
+    # can also use 'sep' to force sections to collapse.
+    t = (
+        Tinta()
+        .pink("A section")
+        .push()
+        .white()
+        .blue("of text", sep="")
+        .green(",")
+        .push()
+        .purple("separated.")
+    )
+    t.print()
+
+    # And finally, you can use some helper tools to clear the current
+    # console and move up a line.
+    Tinta().yellow("Loading...").print()
+    time.sleep(1)
+    Tinta.clearline()
+    Tinta().green("Done").print()
+    time.sleep(1)
+    Tinta.up()
+    Tinta().green("Done :)").print()
+
+
+if __name__ == "__main__":
+    basic()

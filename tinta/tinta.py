@@ -23,7 +23,7 @@ import re
 import sys
 from itertools import zip_longest
 from pathlib import Path
-from typing import Any, cast, List, Optional, overload, Union
+from typing import Any, cast, Dict, List, Optional, overload, Union
 
 from deprecated import deprecated
 
@@ -109,7 +109,7 @@ class Tinta(metaclass=_MetaTinta):
     """
 
     _initialized = False
-    _known_colors: dict[str, Any] = {}
+    _known_colors: Dict[str, Any] = {}
     color: Union[int, str]
     colors: AnsiColors
 
@@ -133,7 +133,7 @@ class Tinta(metaclass=_MetaTinta):
             Tinta._known_colors = vars(self.colors)
             Tinta._initialized = True
         for c in Tinta._known_colors:
-            self.__setattr__(c, functools.partial(self.tint, c))
+            self.__setattr__(c, functools.partial(self.tint, color=c))
 
         if s:
             self.push(*s, sep=sep)

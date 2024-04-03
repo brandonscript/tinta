@@ -23,6 +23,17 @@ from .typ import MissingColorError
 config = configparser.ConfigParser()
 
 
+def _alias_key(colors: "AnsiColors", k: str, search: str, repl: str):
+    """Sets up an alias key for a color."""
+    if k not in config["colors"] and k not in colors.__dict__:
+        raise MissingColorError(f"Color '{k}' not found in colors.ini.")
+    if search.lower() in k.lower():
+        alias_key = k.replace(search.lower(), repl.lower())
+        if alias_key not in config["colors"] and alias_key not in colors.__dict__:
+            colors.__setattr__(alias_key, int(config["colors"][k]))
+            config["colors"][alias_key] = config["colors"][k]
+
+
 class AnsiColors:
     """Color builder for Tinta's console output.
 
@@ -63,6 +74,11 @@ class AnsiColors:
         config.read(path)
         for k, v in config["colors"].items():
             self.__setattr__(k, int(v))
+
+            _alias_key(self, k, "gray", "grey")
+            _alias_key(self, k, "grey", "gray")
+
+        self._colors_ini_path = path
 
     def get(self, color: str) -> int:
         """Returns the ANSI code for a color.

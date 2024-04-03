@@ -6,7 +6,7 @@
   "configurations": [
     {
       "name": "Basic examples",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "examples/basic_example.py",
       "cwd": "${workspaceFolder}",
@@ -18,7 +18,7 @@
     },
     {
       "name": "Complete example set",
-      "type": "python",
+      "type": "debugpy",
       "request": "launch",
       "program": "examples/complete_example.py",
       "cwd": "${workspaceFolder}",
@@ -29,8 +29,8 @@
       "justMyCode": true
     },
     {
-      "name": "Run Tinta tests",
-      "type": "python",
+      "name": "Run Tinta tests (workspace python)",
+      "type": "debugpy",
       "request": "launch",
       "console": "integratedTerminal",
       "module": "pytest",
@@ -38,6 +38,12 @@
         "_PYTEST_RAISE": "1"
       },
       "args": ["-xv"]
+    },
+    {
+      "name": "Run Tinta tests (all versions)",
+      "type": "debugpy",
+      "preLaunchTask": "Run All Pytest Versions",
+      "request": "launch"
     }
   ]
 }

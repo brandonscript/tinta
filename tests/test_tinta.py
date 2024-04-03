@@ -21,7 +21,7 @@
 
 
 import re
-from typing import Any, Callable, List, Tuple
+from typing import Any, Callable, Dict, List, Tuple
 
 import pytest
 from pytest import CaptureFixture
@@ -106,7 +106,7 @@ class TestChaining:
     def test_chaining_resets_correctly(
         self,
         Testa: Callable,
-        kwargs: dict[str, Any],
+        kwargs: Dict[str, Any],
         expected: str,
         capfd: CaptureFixture[str],
     ):
@@ -217,8 +217,26 @@ class TestEdgeCases:
     def test_print_none(self):
         Tinta(None).print()
 
+    def test_empty_color_call(self):
+        t = Tinta("Plain").green()
+        t.push("Green")
+        t.print()
+
     def test_tint_color_0(self):
         Tinta().tint(0, "Zero").print()
+
+
+class TestExamples:
+
+    def test_basic_example(self):
+        from examples.basic_example import basic
+
+        basic()
+
+    def test_complete_example(self):
+        from examples.complete_example import complete
+
+        complete()
 
 
 class TestWhiteSpace:
