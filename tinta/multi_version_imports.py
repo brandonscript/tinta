@@ -30,6 +30,7 @@ try:
     from warnings import deprecated
 except ImportError:
     from deprecated import deprecated
+deprecated = deprecated
 
 
 all = [

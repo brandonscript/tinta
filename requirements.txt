@@ -1,1 +1,1 @@
-deprecated
+deprecated == ^1.2.14

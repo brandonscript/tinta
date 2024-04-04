@@ -25,8 +25,6 @@ from itertools import zip_longest
 from pathlib import Path
 from typing import Any, cast, Dict, List, Optional, overload, Union
 
-from deprecated import deprecated
-
 from .ansi import AnsiColors
 from .colorize import colorize, ensure_reset, tint, was_reset
 from .constants import (
@@ -38,6 +36,7 @@ from .constants import (
     STEALTH,
 )
 from .discover import discover as _discover
+from .multi_version_imports import deprecated
 from .typ import copy_kwargs, MissingColorError, StringType
 
 config = configparser.ConfigParser()
