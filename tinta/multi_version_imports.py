@@ -32,7 +32,6 @@ except ImportError:
     from deprecated import deprecated
 deprecated = deprecated
 
-
 all = [
     deprecated,
     GenericCallable,
