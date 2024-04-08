@@ -23,7 +23,7 @@ fi
 PASSWORD=$(echo $PASSWORD | xargs)
 
 # passthrough call ./build.sh and pass all args:
-./build.sh "$@"
+./dist/build.sh "$@"
 
 # get newest tar.gz from /dist
 LATEST=$(ls -t $ROOT/dist/*.gz | head -n1)
