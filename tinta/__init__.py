@@ -21,7 +21,7 @@
 
 from logging import getLogger
 
-__version__ = "0.1.7b5"
+__version__ = "0.1.7b5-post0"
 
 logger = getLogger(__name__)
 

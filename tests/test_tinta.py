@@ -81,6 +81,22 @@ class TestInit:
     def test_accepts_string_on_init(self):
         assert Tinta("initialized").to_str() == "initialized"
 
+    def test_load_colors(self, alt_colors_ini):
+        # create a test colors.ini
+
+        # load the colors
+        Tinta.load_colors(alt_colors_ini)
+
+        assert Tinta._colors.color_dict == {"sparkle": 195, "dragons_breath": 202}
+        assert Tinta()._colors.color_list == ["sparkle", "dragons_breath"]
+
+        # check the colors
+        assert Tinta().sparkle("sparkle").to_str() == f"\x1b[38;5;195msparkle{O}"
+        assert (
+            Tinta().dragons_breath("dragon's breath").to_str()
+            == f"\x1b[38;5;202mdragon's breath{O}"
+        )
+
 
 class TestBasicColorizing:
 

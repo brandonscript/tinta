@@ -44,3 +44,18 @@ def perf(request):
 
     if request.config.option.perf is True:
         C.PERF_MEASURE = True
+
+
+@pytest.fixture(scope="function", autouse=False)
+def alt_colors_ini(tmp_path):
+
+    from tinta import Tinta
+
+    colors_ini = tmp_path / "colors.ini"
+    colors_ini.write_text("""[colors]\nsparkle = 195\ndragons_breath = 202\n""")
+
+    orig_colors_ini = Tinta._colors._colors_ini_path
+
+    Tinta.load_colors(colors_ini)
+    yield colors_ini
+    Tinta.load_colors(orig_colors_ini)

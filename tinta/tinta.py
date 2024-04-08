@@ -56,6 +56,7 @@ class _MetaTinta(type):
 
     def load_colors(cls, path: Union[str, Path]):
         cls._initialized = False
+        AnsiColors._initialized = False
         cls._colors = AnsiColors(path)
 
 
@@ -117,7 +118,7 @@ class Tinta(metaclass=_MetaTinta):
         """
 
         # Inject ANSI helper functions
-        for c in Tinta._colors.dict_colors():
+        for c in Tinta._colors.color_dict:
             if hasattr(self, c) and not str(getattr(self, c)).startswith(
                 "functools.partial(<bound method Tinta.tint"
             ):
@@ -642,7 +643,7 @@ class Tinta(metaclass=_MetaTinta):
             try:
                 return self.__getattribute__(name)  # type: ignore
             except AttributeError as e:
-                known_colors = "\n - ".join(self._colors.list_colors())
+                known_colors = "\n - ".join(self._colors.color_list)
                 known_colors = f" - {known_colors}"
                 raise AttributeError(
                     f"'{name}' not found.\nDid you try and access a color that doesn't exist? Available colors:\n{known_colors}\n"
