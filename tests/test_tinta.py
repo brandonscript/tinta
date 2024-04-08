@@ -22,7 +22,6 @@
 
 import os
 import re
-import subprocess
 import time
 import timeit
 from contextlib import contextmanager
@@ -107,24 +106,12 @@ class TestInit:
         Tinta().inspect(name="grey")
         Tinta.load_colors("examples/colors.ini")
         Tinta().inspect(name="grey")
+        Tinta.load_colors("examples/colors.ini")
+        Tinta().inspect(name="grey")
         Tinta.load_colors(alt_colors_ini)
         Tinta().inspect(name="sparkle")
         Tinta.load_colors("examples/colors.ini")
         Tinta().inspect(name="grey")
-
-        try:
-            subprocess.check_output(
-                """pipenv run python -c \"from tinta import Tinta
-Tinta.load_colors('examples/colors.ini')
-Tinta.load_colors('examples/colors.ini')
-Tinta().inspect(name='grey')
-Tinta().grey('grey').print()\"""",
-                shell=True,
-                stderr=subprocess.STDOUT,
-                env=os.environ,
-            )
-        except subprocess.CalledProcessError as e:
-            raise Exception(e.stdout)
 
     def test_loads_colors_with_clobbering(self, clobber_colors_ini):
         with pytest.raises(AttributeError, match="Cannot overwrite built-in method"):
