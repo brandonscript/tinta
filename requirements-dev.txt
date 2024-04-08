@@ -1,3 +1,2 @@
-deprecated
 pytest
 pytest-cov

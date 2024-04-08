@@ -4,7 +4,6 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-deprecated = "^1.2.14"
 
 [dev-packages]
 pipenv = "*"
@@ -19,7 +18,6 @@ twine = "*"
 hatchling = "*"
 setuptools = "*"
 wheel = "*"
-types-deprecated = "*"
 
 [requires]
 python_version = "3.6"

@@ -1,4 +1,5 @@
-from functools import reduce
+import time
+from functools import reduce, wraps
 from typing import cast, List, Sequence
 
 from .multi_version_imports import TypeVar
@@ -16,3 +17,42 @@ def flatmap(lst: Sequence[List[T]]) -> List[T]:
         return cast(List[T], lst)
 
     return reduce(list.__add__, lst)
+
+
+INDENT = 0
+
+
+def measure(func):
+
+    import tinta.constants as C
+
+    @wraps(func)
+    def timeit_wrapper(*args, **kwargs):
+        return func(*args, **kwargs)
+        global INDENT
+        class_name = args[0].__class__.__name__ if args else ""
+        if class_name == "NoneType":
+            class_name = ""
+        n = f"{INDENT * ' '}{class_name} {func.__name__}"
+        print(n)
+        start_time = time.perf_counter()
+        INDENT += 2
+        result = func(*args, **kwargs)
+        end_time = time.perf_counter()
+        total_time = (end_time - start_time) * 1000
+        INDENT -= 2
+        # if total_time > 0.00001:
+        s = f"{n} - took {total_time:.2f} ms"
+        if total_time > 0.07:
+            col = "\x1b[38;5;196m"
+        elif total_time > 0.05:
+            col = "\x1b[38;5;208m"
+        elif total_time > 0.02:
+            col = "\x1b[38;5;220m"
+        else:
+            col = "\x1b[2;38;5;237m"
+        s = f"{col}{s}\x1b[0m" if col else s
+        print(s)
+        return result
+
+    return timeit_wrapper if C.PERF_MEASURE else func

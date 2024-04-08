@@ -16,22 +16,56 @@
 import configparser
 import sys
 from pathlib import Path
-from typing import List, Optional, Union
+from typing import List, Optional, Type, Union
 
+from .stylize import ansi_color_to_int, is_ansi_str
 from .typ import MissingColorError
+from .utils import measure
 
-config = configparser.ConfigParser()
+colors_ini = configparser.ConfigParser()
 
 
-def _alias_key(colors: "AnsiColors", k: str, search: str, repl: str):
+@measure
+def _alias_keys(colors: "Union[AnsiColors, Type[AnsiColors]]", search: str, repl: str):
     """Sets up an alias key for a color."""
-    if k not in config["colors"] and k not in colors.__dict__:
-        raise MissingColorError(f"Color '{k}' not found in colors.ini.")
-    if search.lower() in k.lower():
+
+    for k in (k for k in colors_ini["colors"].keys() if search.lower() in k.lower()):
         alias_key = k.replace(search.lower(), repl.lower())
-        if alias_key not in config["colors"] and alias_key not in colors.__dict__:
-            colors.__setattr__(alias_key, int(config["colors"][k]))
-            config["colors"][alias_key] = config["colors"][k]
+        if alias_key not in colors_ini["colors"] and alias_key not in colors.__dict__:
+            if isinstance(colors, AnsiColors):
+                colors.__setattr__(alias_key, int(colors_ini["colors"][k]))
+            else:
+                setattr(colors, alias_key, int(colors_ini["colors"][k]))
+            colors_ini["colors"][alias_key] = colors_ini["colors"][k]
+
+
+@measure
+def _check_path(path: Optional[Union[str, Path]] = None):
+    """Loads colors from a file."""
+    path = Path(path) if path else Path(__file__).parent / "colors.ini"
+    if not path.is_absolute():
+        path = Path().cwd() / path
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Tinta failed to load colors, '{path}' does not exist."
+        )
+
+    # if path is a dir, look for colors.ini
+    if path.is_dir():
+        path = path / "colors.ini"
+
+    # if there is still no colors.ini file, look for one in Path.cwd() or PYTHONPATH
+    if not path.exists():
+        for p in [Path().cwd(), Path(sys.path[0])]:
+            if (p / "colors.ini").exists():
+                path = p / "colors.ini"
+                break
+
+    if not path.exists():
+        raise FileNotFoundError(
+            f"Tinta failed to load colors, could not find 'colors.ini' in cwd or in PYTHONPATH. Please provide a valid path to a colors.ini file."
+        )
+    return path
 
 
 class AnsiColors:
@@ -46,40 +80,31 @@ class AnsiColors:
     ANSI values in colors.ini.
     """
 
+    _initialized = False
+    _colors_ini_path = None
+
+    @measure
     def __init__(self, path: Optional[Union[str, Path]] = None):
-        path = Path(path) if path else Path(__file__).parent / "colors.ini"
-        if not path.is_absolute():
-            path = Path().cwd() / path
-        if not path.exists():
-            raise FileNotFoundError(
-                f"Tinta failed to load colors, '{path}' does not exist."
-            )
 
-        # if path is a dir, look for colors.ini
-        if path.is_dir():
-            path = path / "colors.ini"
+        if not AnsiColors._initialized:
+            path = _check_path(path)
+            AnsiColors.load_colors(path)
+            AnsiColors._colors_ini_path = path
+            AnsiColors._initialized = True
 
-        # if there is still no colors.ini file, look for one in Path.cwd() or PYTHONPATH
-        if not path.exists():
-            for p in [Path().cwd(), Path(sys.path[0])]:
-                if (p / "colors.ini").exists():
-                    path = p / "colors.ini"
-                    break
+    @classmethod
+    @measure
+    def load_colors(cls, path: Union[str, Path]):
+        """Loads colors from a file."""
 
-        if not path.exists():
-            raise FileNotFoundError(
-                f"Tinta failed to load colors, could not find 'colors.ini' in cwd or in PYTHONPATH. Please provide a valid path to a colors.ini file."
-            )
+        colors_ini.read(path)
+        for k, v in colors_ini["colors"].items():
+            setattr(cls, k, int(v))
 
-        config.read(path)
-        for k, v in config["colors"].items():
-            self.__setattr__(k, int(v))
+        _alias_keys(cls, "gray", "grey")
+        _alias_keys(cls, "grey", "gray")
 
-            _alias_key(self, k, "gray", "grey")
-            _alias_key(self, k, "grey", "gray")
-
-        self._colors_ini_path = path
-
+    @measure
     def get(self, color: str) -> int:
         """Returns the ANSI code for a color.
 
@@ -93,28 +118,41 @@ class AnsiColors:
         if color == "default":
             return 0
 
-        if color not in config["colors"]:
+        if is_ansi_str(color):
+            return ansi_color_to_int(color)
+
+        if color not in colors_ini["colors"]:
             raise MissingColorError(f"Color '{color}' not found in colors.ini.")
 
-        return int(config["colors"][color])
+        return int(getattr(self, color))
 
-    def reverse_get(self, code: int) -> str:
+    @measure
+    def reverse_get(self, code: int, ignore_errors: bool = False) -> str:
         """Returns the color name for an ANSI code.
 
         Args:
             code (int): An ANSI code.
+            ignore_errors (bool, optional): If True, will return None if the code is not found. Defaults to False.
 
         Returns:
             str: The color name for the code.
         """
-        for k, v in config["colors"].items():
+
+        if code == 0:
+            return "default"
+
+        for k, v in colors_ini["colors"].items():
             if int(v) == code:
                 return k
 
-        raise MissingColorError(
-            f"Color with ANSI code '{code}' not found in colors.ini."
-        )
+        if not ignore_errors:
+            raise MissingColorError(
+                f"Color with ANSI code '{code}' not found in colors.ini."
+            )
 
+        return "[undefined color]"
+
+    @measure
     def list_colors(self) -> List[str]:
         """Returns a list of all colors in the colors.ini file."""
-        return list(config["colors"].keys())
+        return list(colors_ini["colors"].keys())

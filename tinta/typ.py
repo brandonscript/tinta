@@ -26,6 +26,18 @@ class MissingColorError(Exception):
     pass
 
 
+class InvalidStyleError(Exception):
+    """Raised when an invalid style is passed to a function."""
+
+    pass
+
+
+class InvalidColorError(Exception):
+    """Raised when an invalid color is passed to a function."""
+
+    pass
+
+
 def copy_kwargs(func: GenericCallable) -> Callable[..., GenericCallable]:
     """Decorator does nothing but casts the original function to match the given function signature"""
 

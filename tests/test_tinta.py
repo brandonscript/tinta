@@ -22,14 +22,18 @@
 
 import os
 import re
+import time
+import timeit
 from contextlib import contextmanager
 from typing import Any, Callable, Dict, List, Tuple
 
 import pytest
 from pytest import CaptureFixture
 
-# pylint: disable=import-error
 from tinta import Tinta
+
+# pylint: disable=import-error
+from tinta.stylize import _join, ansi_styles
 
 Tinta.load_colors("examples/colors.ini")
 
@@ -49,6 +53,16 @@ GRAY = "\x1b[38;5;243m"
 D_GRAY = "\x1b[38;5;235m"
 L_GRAY = "\x1b[38;5;248m"
 WHITE = "\x1b[38;5;255m"
+BOLD, BOLD_OFF = ansi_styles("bold")
+UNDERLINE, UNDERLINE_OFF = ansi_styles("underline")
+DIM, DIM_OFF = ansi_styles("dim")
+STRIKE, STRIKE_OFF = ansi_styles("strikethrough")
+
+
+def _stitch(*args):
+    # get everything after \x1b[ for each arg
+    codes = [re.search(r"\x1b\[(.*?)m", arg).group(1) for arg in args]
+    return f"\x1b[{_join(*codes).strip(';')}m"
 
 
 @contextmanager
@@ -64,37 +78,236 @@ class TestInit:
     def test_init(self):
         assert len(Tinta("initialized").parts) == 1
 
+    def test_accepts_string_on_init(self):
+        assert Tinta("initialized").to_str() == "initialized"
+
 
 class TestBasicColorizing:
 
+    basic_colors = [
+        # fmt: off
+        ("green", lambda: Tinta().green("green"), f"{GREEN}green{O}"),
+        ("green", lambda: Tinta().tint(35, "green"), f"{GREEN}green{O}"),
+        ("green", lambda: Tinta().tint("green", "green"), f"{GREEN}green{O}"),
+        ("red", lambda: Tinta().red("red"), f"{RED}red{O}"),
+        ("blue", lambda: Tinta().blue("blue"), f"{BLUE}blue{O}"),
+        ("blue", lambda: Tinta().blue("green (but actually blue)"), f"{BLUE}green (but actually blue){O}"),
+        ("light_blue", lambda: Tinta().light_blue("light_blue"), f"{L_BLUE}light_blue{O}"),
+        ("yellow", lambda: Tinta().yellow("yellow"), f"{YELLOW}yellow{O}"),
+        ("amber", lambda: Tinta().amber("amber"), f"{AMBER}amber{O}"),
+        ("mint", lambda: Tinta().mint("mint"), f"{MINT}mint{O}"),
+        ("olive", lambda: Tinta().olive("olive"), f"{OLIVE}olive{O}"),
+        ("orange", lambda: Tinta().orange("orange"), f"{ORANGE}orange{O}"),
+        ("purple", lambda: Tinta().purple("purple"), f"{PURPLE}purple{O}"),
+        ("pink", lambda: Tinta().pink("pink"), f"{PINK}pink{O}"),
+        ("gray", lambda: Tinta().gray("gray"), f"{GRAY}gray{O}"),
+        ("dark_gray", lambda: Tinta().dark_gray("dark_gray"), f"{D_GRAY}dark_gray{O}"),
+        ("light_gray", lambda: Tinta().light_gray("light_gray"), f"{L_GRAY}light_gray{O}"),
+        ("white", lambda: Tinta().white("white"), f"{WHITE}white{O}"),
+        # fmt: on
+    ]
+
     @pytest.mark.parametrize(
         "color,Testa,expected",
-        [
-            # fmt: off
-            ("green", lambda: Tinta().green("green"), f"{GREEN}green{O}"),
-            ("green", lambda: Tinta().tint(35, "green"), f"{GREEN}green{O}"),
-            ("green", lambda: Tinta().tint("green", "green"), f"{GREEN}green{O}"),
-            ("red", lambda: Tinta().red("red"), f"{RED}red{O}"),
-            ("blue", lambda: Tinta().blue("blue"), f"{BLUE}blue{O}"),
-            ("blue", lambda: Tinta().blue("Green"), f"{BLUE}Green{O}"),
-            ("light_blue", lambda: Tinta().light_blue("light_blue"), f"{L_BLUE}light_blue{O}"),
-            ("yellow", lambda: Tinta().yellow("yellow"), f"{YELLOW}yellow{O}"),
-            ("amber", lambda: Tinta().amber("amber"), f"{AMBER}amber{O}"),
-            ("mint", lambda: Tinta().mint("Mint"), f"{MINT}Mint{O}"),
-            ("olive", lambda: Tinta().olive("olive"), f"{OLIVE}olive{O}"),
-            ("orange", lambda: Tinta().orange("orange"), f"{ORANGE}orange{O}"),
-            ("purple", lambda: Tinta().purple("purple"), f"{PURPLE}purple{O}"),
-            ("pink", lambda: Tinta().pink("pink"), f"{PINK}pink{O}"),
-            ("gray", lambda: Tinta().gray("gray"), f"{GRAY}gray{O}"),
-            ("dark_gray", lambda: Tinta().dark_gray("dark_gray"), f"{D_GRAY}dark_gray{O}"),
-            ("light_gray", lambda: Tinta().light_gray("light_gray"), f"{L_GRAY}light_gray{O}"),
-            ("white", lambda: Tinta().white("white"), f"{WHITE}white{O}"),
-            # fmt: on
-        ],
+        basic_colors,
     )
-    def test_colors(self, color, Testa, expected):
+    def test_print_colors(self, color, Testa, expected, perf):
         Testa().print()
+
+    @pytest.mark.parametrize(
+        "color,Testa,expected",
+        basic_colors,
+    )
+    def test_check_output(self, color, Testa, expected, perf):
         assert Testa().to_str() == expected
+
+    def test_sandwich_colors(self):
+        assert (
+            Tinta("plain").green("green").default("plain").to_str()
+            == f"plain {GREEN}green{O} plain"
+        )
+
+    def test_clear_resets_color(self):
+        Tinta().green("green").clear("plain").print()
+        assert (
+            Tinta().green("green").clear("plain")("string").to_str()
+            == f"{GREEN}green{O} plain string"
+        )
+
+
+class TestBasicStylizing:
+
+    def test_bold(self):
+        b = Tinta().bold("bold")
+        assert b.to_str() == f"{BOLD}bold{O}"
+        b.print()
+
+        b = Tinta().b("bold")
+        assert b.to_str() == f"{BOLD}bold{O}"
+        b.print()
+
+    def test_normal_resets_bold(self):
+        b = Tinta().bold("bold").normal("normal")
+        assert b.to_str() == f"{BOLD}bold{O} normal"
+        b.print()
+
+    def test_bold_resets_bold(self):
+        b = Tinta("To").bold().red("boldly").bold().white("go")
+        assert b.to_str() == f"To {_stitch(BOLD, RED)}boldly{O} {WHITE}go{O}"
+        b.print()
+
+    def test_bold_resets_only_bold(self):
+        b = Tinta("To").bold().underline().red("boldly").bold().white("go")
+        assert (
+            b.to_str()
+            == f"To {_stitch(BOLD, UNDERLINE, RED)}boldly{BOLD_OFF} {WHITE}go{O}"
+        )
+        b.print()
+
+    def test_underline(self):
+        u = Tinta().underline("underline")
+        assert u.to_str() == f"{UNDERLINE}underline{O}"
+        u.print()
+
+        _ = Tinta()._("underscore")
+        assert _.to_str() == f"{UNDERLINE}underscore{O}"
+        _.print()
+
+    def test_normal_resets_underline(self):
+        u = Tinta().underline("underline").normal("normal")
+        assert u.to_str() == f"{UNDERLINE}underline{O} normal"
+        u.print()
+
+    def test_underline_resets_underline(self):
+        u = Tinta("To")._().amber("underlinely")._().purple("go")
+        assert (
+            u.to_str() == f"To {_stitch(UNDERLINE, AMBER)}underlinely{O} {PURPLE}go{O}"
+        )
+        u.print()
+
+    def test_underline_resets_only_underline(self):
+        u = Tinta("To").underline().bold().amber("underlinely").underline().olive("go")
+        assert (
+            u.to_str()
+            == f"To {_stitch(BOLD, UNDERLINE, AMBER)}underlinely{UNDERLINE_OFF} {OLIVE}go{O}"
+        )
+        u.print()
+
+    def test_dim(self):
+        d = Tinta().dim("dim")
+        assert d.to_str() == f"{DIM}dim{O}"
+        d.print()
+
+    def test_normal_resets_dim(self):
+        t = Tinta().dim("dim").normal("normal")
+        assert t.to_str() == f"{DIM}dim{O} normal"
+        t.print()
+
+    def test_dim_resets_dim(self):
+        d = Tinta("To").dim().olive("dimly").dim().blue("go")
+        assert d.to_str() == f"To {_stitch(DIM, OLIVE)}dimly{O} {BLUE}go{O}"
+        d.print()
+
+    def test_dim_resets_only_dim(self):
+        d = Tinta("To").dim().underline().olive("dimly").dim().blue("go")
+        assert (
+            d.to_str()
+            == f"To {_stitch(DIM, UNDERLINE, OLIVE)}dimly{DIM_OFF} {BLUE}go{O}"
+        )
+        d.print()
+
+    def test_strikethrough(self):
+        s = Tinta().strikethrough("strikethrough")
+        assert s.to_str() == f"{STRIKE}strikethrough{O}"
+        s.print()
+
+    def test_normal_resets_strikethrough(self):
+        s = Tinta().strikethrough("strikethrough").normal("normal")
+        assert s.to_str() == f"{STRIKE}strikethrough{O} normal"
+        s.print()
+
+    def test_strikethrough_resets_strikethrough(self):
+        s = (
+            Tinta("To")
+            .strikethrough()
+            .olive("strikethroughly")
+            .strikethrough()
+            .blue("go")
+        )
+        assert (
+            s.to_str() == f"To {_stitch(STRIKE, OLIVE)}strikethroughly{O} {BLUE}go{O}"
+        )
+        s.print()
+
+    def test_strikethrough_resets_only_strikethrough(self):
+        s = (
+            Tinta("To")
+            .strikethrough()
+            .underline()
+            .olive("strikethroughly")
+            .strikethrough()
+            .blue("go")
+        )
+        assert (
+            s.to_str()
+            == f"To {_stitch(UNDERLINE, STRIKE, OLIVE)}strikethroughly{STRIKE_OFF} {BLUE}go{O}"
+        )
+        s.print()
+
+    def test_bold_underline(self):
+        bu = Tinta().bold("bold").underline("underline")
+        assert bu.to_str() == f"{BOLD}bold {UNDERLINE}underline{O}"
+        bu.print()
+
+    def test_bold_dim(self):
+        bd = Tinta().bold("bold").dim("dim")
+        assert bd.to_str() == f"{BOLD}bold {DIM}dim{O}"
+        bd.print()
+
+    def test_underline_dim(self):
+        ud = Tinta().underline("underline").dim("dim")
+        assert ud.to_str() == f"{UNDERLINE}underline {DIM}dim{O}"
+        ud.print()
+
+    def test_bold_underline_dim(self):
+        bud = Tinta().bold("bold").underline("underline").dim("dim")
+        assert bud.to_str() == f"{BOLD}bold {UNDERLINE}underline {DIM}dim{O}"
+        bud.print()
+
+    def test_underline_bold_dim(self):
+        ubd = Tinta().underline("underline").bold("bold").dim("dim")
+        assert ubd.to_str() == f"{UNDERLINE}underline {BOLD}bold {DIM}dim{O}"
+        ubd.print()
+
+    def test_bold_strikethrough(self):
+        bs = Tinta().bold("bold").strikethrough("strikethrough")
+        assert bs.to_str() == f"{BOLD}bold {STRIKE}strikethrough{O}"
+        bs.print()
+
+    def test_underline_strikethrough(self):
+        us = Tinta().underline("underline").strikethrough("strikethrough")
+        assert us.to_str() == f"{UNDERLINE}underline {STRIKE}strikethrough{O}"
+        us.print()
+
+    def test_bold_underline_strikethrough(self):
+        bus = Tinta().bold("bold").underline("underline").strikethrough("strikethrough")
+        assert (
+            bus.to_str() == f"{BOLD}bold {UNDERLINE}underline {STRIKE}strikethrough{O}"
+        )
+        bus.print()
+
+    def test_styles_remain_until_normal(self):
+        assert (
+            Tinta()
+            .bold("bold")
+            .underline("underline")
+            .dim("dim")
+            .pink("pink")
+            .normal()
+            .pink("pink")
+            .to_str()
+            == f"{BOLD}bold {UNDERLINE}underline {DIM}dim {PINK}pink{_stitch(BOLD_OFF, UNDERLINE_OFF)} pink{O}"
+        )
 
 
 class TestChaining:
@@ -137,11 +350,11 @@ class TestChaining:
             ),
             (
                 lambda: Tinta().mint("Mint").white("\nice cream\nis the")._("\nbest"),
-                f"{MINT}Mint{WHITE}\nice cream\nis the\x1b[38;5;255;4m\nbest{O}",
+                f"{MINT}Mint{WHITE}\nice cream\nis the{UNDERLINE}\nbest{O}",
             ),
             (
                 lambda: Tinta("\n").mint("Mint\n").white("ice cream is the")._("best"),
-                f"\n{MINT}Mint\n{WHITE}ice cream is the \x1b[38;5;255;4mbest{O}",
+                f"\n{MINT}Mint\n{WHITE}ice cream is the {UNDERLINE}best{O}",
             ),
         ],
     )
@@ -149,6 +362,11 @@ class TestChaining:
         s = Testa().to_str()
         Testa().print()
         assert s == expected
+
+    def test_chaining_same_styles_doesnt_dupe(self):
+        t = Tinta().green("green").green("green").green("green")
+        assert t.to_str() == f"{GREEN}green green green{O}"
+        t.print()
 
 
 class TestUnicode:
@@ -170,19 +388,27 @@ class TestUnicode:
         assert Tinta("🦄").to_str() == "🦄"
 
     def test_emoji_with_color(self):
-        Tinta().purple("🦄").print()
+        t = Tinta().purple("🦄")
         assert Tinta().purple("🦄").to_str() == f"{PURPLE}🦄{O}"
+        t.print()
 
     def test_emoji_with_color_and_clear(self):
-        Tinta().pink("🦄").clear("🦄").print()
-        assert Tinta().pink("🦄").clear("🦄").to_str(sep="") == f"{PINK}🦄\x1b[0m🦄{O}"
+        t = Tinta().pink("🦄").clear("🦄")
+        assert t.to_str(sep="") == f"{PINK}🦄{O}🦄"
+        t.print(sep="")
 
-    def test_emoji_with_color_and_clear_and_emoji(self):
-        Tinta().purple("🦄").clear("🦄").pink("🦄").print()
+    def test_emoji_with_color_style_and_normal(self):
+        t = Tinta().purple()._("🦄").normal("🦄").pink("🦄")
         assert (
-            Tinta().purple("🦄").clear("🦄").pink("🦄").to_str()
-            == f"{PURPLE}🦄 \x1b[0m🦄 {PINK}🦄{O}"
+            t.to_str()
+            == f"{_stitch(UNDERLINE, PURPLE)}🦄{UNDERLINE_OFF} 🦄 {PINK}🦄{O}"
         )
+        t.print()
+
+    def test_emoji_with_color_style_and_clear(self):
+        t = Tinta().purple()._("🦄").clear("🦄").pink("🦄")
+        assert t.to_str() == f"{_stitch(UNDERLINE, PURPLE)}🦄{O} 🦄 {PINK}🦄{O}"
+        t.print()
 
 
 class TestLowerLevel:
@@ -599,17 +825,30 @@ class TestComplexStructure:
 
         assert len(t.parts) == 0
 
-    def test_zero_handles_clear(self):
+    def test_pop_updates_current_style(self):
+        t = Tinta().green("green").red("red").blue("blue")
+        t.pop()
+        assert t.to_str(plaintext=True) == "green red"
+        t.pop()
+        assert t.to_str(plaintext=True) == "green"
+        t.pop()
+        assert t.to_str(plaintext=True) == ""
+
+        t = Tinta().green("green").red("red").blue("blue").bold("bold n' blue")
+        t.pop(2)
+        assert t._styler == Tinta.Styler(color=RED)
+
+    def test_tint_handles_zero(self):
         s = (
-            Tinta("White")
-            .red("Red")
-            .green("Green")
-            .blue("Blue")
-            .tint(0, "Clear")
+            Tinta("white")
+            .red("red")
+            .green("green")
+            .blue("blue")
+            .tint(0, "default")
             .to_str(sep=" ")
         )
         print(s)
-        assert s == f"White {RED}Red {GREEN}Green {BLUE}Blue {O}Clear{O}"
+        assert s == f"white {RED}red {GREEN}green {BLUE}blue{O} default"
 
 
 class TestUtils:
@@ -697,3 +936,104 @@ class TestUtils:
     )
     def test_rjust(self, Testa: Callable, rjust: int, fillchar: str, expected: str):
         assert Tinta.rjust(Testa().to_str(), rjust, fillchar) == expected
+
+
+class TestTiming:
+
+    def test_basic_time_against_raw(self):
+        base_start = time.perf_counter()
+        print(
+            f"{BLUE}blue {GREEN}green {L_BLUE}light blue {YELLOW}yellow {AMBER}amber {MINT}mint {OLIVE}olive {ORANGE}orange {PURPLE}purple {PINK}pink {GRAY}gray {D_GRAY}dark gray {L_GRAY}light gray {WHITE}white{O}"
+        )
+        base_end = time.perf_counter()
+
+        tinta_start = time.perf_counter()
+
+        (
+            Tinta()
+            .blue("blue")
+            .green("green")
+            .light_blue("light blue")
+            .yellow("yellow")
+            .amber("amber")
+            .mint("mint")
+            .olive("olive")
+            .orange("orange")
+            .purple("purple")
+            .pink("pink")
+            .gray("gray")
+            .dark_gray("dark gray")
+            .light_gray("light gray")
+            .white("white")
+            .print()
+        )
+        tinta_end = time.perf_counter()
+
+        raw_diff = base_end - base_start
+        tinta_diff = tinta_end - tinta_start
+
+        print(f"Raw: {raw_diff:.4f} seconds")
+        print(f"Tinta: {tinta_diff:.4f} seconds")
+
+        assert tinta_diff - raw_diff < 0.001
+
+    def test_with_timeit(self):
+        tinta_time = timeit.timeit(
+            lambda: Tinta()
+            .blue("blue")
+            .green("green")
+            .light_blue("light blue")
+            .yellow("yellow")
+            .amber("amber")
+            .mint("mint")
+            .olive("olive")
+            .orange("orange")
+            .purple("purple")
+            .pink("pink")
+            .gray("gray")
+            .dark_gray("dark gray")
+            .light_gray("light gray")
+            .white("white")
+            .print(),
+            number=1000,
+        )
+
+        class FakeClass:
+            def __init__(self):
+                self.blue = "blue"
+                self.green = "green"
+                self.light_blue = "light blue"
+                self.yellow = "yellow"
+                self.amber = "amber"
+                self.mint = "mint"
+                self.olive = "olive"
+                self.orange = "orange"
+                self.purple = "purple"
+                self.pink = "pink"
+                self.gray = "gray"
+                self.dark_gray = "dark gray"
+                self.light_gray = "light gray"
+                self.white = "white"
+
+            def print(self):
+                print(
+                    f"{BLUE}{self.blue} {GREEN}{self.green} {L_BLUE}{self.light_blue} {YELLOW}{self.yellow} {AMBER}{self.amber} {MINT}{self.mint} {OLIVE}{self.olive} {ORANGE}{self.orange} {PURPLE}{self.purple} {PINK}{self.pink} {GRAY}{self.gray} {D_GRAY}{self.dark_gray} {L_GRAY}{self.light_gray} {WHITE}{self.white}{O}"
+                )
+
+        class_time = timeit.timeit(
+            lambda: FakeClass().print(),
+            number=1000,
+        )
+
+        raw_time = timeit.timeit(
+            lambda: print(
+                f"{BLUE}blue {GREEN}green {L_BLUE}light blue {YELLOW}yellow {AMBER}amber {MINT}mint {OLIVE}olive {ORANGE}orange {PURPLE}purple {PINK}pink {GRAY}gray {D_GRAY}dark gray {L_GRAY}light gray {WHITE}white{O}"
+            ),
+            number=1000,
+        )
+
+        print(f"Raw: {raw_time:.4f} seconds")
+        print(f"Class: {class_time:.4f} seconds")
+        print(f"Tinta: {tinta_time:.4f} seconds")
+
+        assert tinta_time - raw_time < 0.3

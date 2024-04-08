@@ -21,32 +21,44 @@ import functools
 import os
 import re
 import sys
-from itertools import zip_longest
 from pathlib import Path
-from typing import Any, cast, Dict, List, Optional, overload, Union
+from typing import Any, cast, Dict, List, Optional, overload, Sequence, Union
 
 from .ansi import AnsiColors
-from .colorize import colorize, ensure_reset, tint, was_reset
 from .constants import (
+    ANSI_STYLES,
     CURSOR_UP_ONE,
     ERASE_LINE,
     PREFER_PLAINTEXT,
+    PUNC,
     SEP,
     SMART_FIX_PUNCTUATION,
     STEALTH,
 )
 from .discover import discover as _discover
-from .multi_version_imports import deprecated
+from .stylize import _join, ensure_reset, is_ansi_str, stylize
 from .typ import copy_kwargs, MissingColorError, StringType
+from .utils import measure
 
 config = configparser.ConfigParser()
 
 
 class _MetaTinta(type):
 
+    _initialized = False
+    _known_colors: Dict[str, Any] = {}
+    colors: AnsiColors
+
     def __init__(cls, name, bases, dct):
         super(_MetaTinta, cls).__init__(name, bases, dct)
         cls.colors = AnsiColors()
+
+        # Inject ANSI helper functions
+        if not cls._initialized:
+            cls._known_colors = vars(cls.colors)
+            cls._initialized = True
+        for c in cls._known_colors:
+            setattr(cls, c, functools.partial(tint, color=c))
 
     def load_colors(cls, path: Union[str, Path]):
         loaded_colors = AnsiColors(path)
@@ -94,52 +106,45 @@ class Tinta(metaclass=_MetaTinta):
         to_str() -> str:           Returns a compiled rich text string, or use plaintext=True for plaintext.
         push() -> self:             Adds segments to this Tinta instance.
         pop(qty: int) -> self:              Removes the last 'qty' segments from this Tinta instance.
-        text()                      [deprecated]
-        plaintext()                 [deprecated]
-        add()                       [deprecated, use push or __call__]
-        code()                      [deprecated]
         bold() -> self:             Sets segments to bold.
         underline() -> self:        Sets segments to underline.
         dim() -> self:              Sets segments to a darker, dimmed color.
+        strikethrough() -> self:    Sets segments to strikethrough.
         normal() -> self:           Removes all styles.
         clear() -> self:            Removes all styles and colors.
         line() -> self:             Adds segments on a new line.
         print():                    Prints the output of a Tinta instance, then clears.
     """
 
-    _initialized = False
-    _known_colors: Dict[str, Any] = {}
-    color: Union[int, str]
-    colors: AnsiColors
-
+    @measure
     def __init__(
-        self, *s: Any, color: Optional[Union[str, int]] = None, sep: str = SEP
+        self,
+        *s: Any,
+        color: Union[str, int] = 0,
+        styles: List[str] = [],
+        sep: str = SEP,
     ):
         """Main intializer for Tinta
 
         Args:
             *s: Segments of text to add.
+            color (Union[str, int], optional): A color name or ANSI color index. Defaults to None.
+            styles (List[str], optional): A list of style strings. Defaults to None.
             sep (str, optional): Used to join strings. Defaults to ' '.
         """
 
-        self.color = color or 0  # 0 is the default color for terminals
-        self.style: List[str] = []
+        self._styler = Tinta.Styler(color=color, styles=styles)
         self._parts: List["Tinta.Part"] = []
         self._prefixes: List[str] = []
-
-        # Inject ANSI helper functions
-        if not Tinta._initialized:
-            Tinta._known_colors = vars(self.colors)
-            Tinta._initialized = True
-        for c in Tinta._known_colors:
-            self.__setattr__(c, functools.partial(self.tint, color=c))
 
         if s:
             self.push(*s, sep=sep)
 
+    @measure
     def __call__(self, *s: Any, sep: str = SEP) -> "Tinta":
         return self.push(*s, sep=sep)
 
+    @measure
     def __repr__(self) -> str:
         """Generates a string representation of the current
         Tinta instance.
@@ -149,6 +154,7 @@ class Tinta(metaclass=_MetaTinta):
         """
         return str(self.to_str(plaintext=True))
 
+    @measure
     def __str__(self) -> str:
         """Generates a string representation of the current
         Tinta instance, colorized.
@@ -158,74 +164,54 @@ class Tinta(metaclass=_MetaTinta):
 
         return self.to_str()
 
+    @measure
     def _get_sep(
         self,
-        p: "Tinta.Part",
-        next_p: Optional["Tinta.Part"],
+        mp: "Tinta.Part",
+        np: Optional["Tinta.Part"],
         sep: Optional[str],
     ) -> str:
-        if not next_p:
+        if not np:
             return ""
-        return sep if sep is not None else p.sep
+        return sep if sep is not None else mp.sep
 
+    @measure
     def _get_str(
         self,
         attr: StringType,
-        p: "Tinta.Part",
-        next_p: Optional["Tinta.Part"] = None,
+        lp: Optional["Tinta.Part"],
+        mp: "Tinta.Part",
+        np: Optional["Tinta.Part"],
         sep: Optional[str] = None,
         fix_punc: bool = SMART_FIX_PUNCTUATION,
     ) -> str:
 
-        s: str = getattr(p, attr)
-
-        next_char_is_punc = (
-            next_p.pln[0]
-            in [
-                ".",
-                ",",
-                ";",
-                ":",
-                "!",
-                "?",
-            ]
-            if fix_punc and next_p and next_p.pln
-            else False
+        s: str = (
+            mp.pln
+            if attr == "pln"
+            else mp.fmt(lp, np) if attr == "fmt" else mp.esc(lp, np)
         )
 
-        punc_affects_sep = (
-            next_char_is_punc
-            and any(
-                [
-                    (len(next_p.pln) == 1),
-                    (len(next_p.pln) > 1 and next_p.pln[1] == " "),
-                ]
-            )
-            if next_p and next_p.pln
-            else False
-        )
+        if fix_punc:
+            # next char is empty
+            if not np or not np.pln:
+                return s
 
-        next_char_is_newline = bool(next_p and next_p.pln.startswith(os.linesep))
-        last_char_is_newline = p.pln.endswith(os.linesep)
-        newline_affects_punc = last_char_is_newline or next_char_is_newline
+            # current char is empty
+            if not mp.pln:
+                return s
 
-        should_ignore_sep = punc_affects_sep or newline_affects_punc
+            # next or last char is newline
+            if np.pln.startswith(os.linesep) or mp.pln.endswith(os.linesep):
+                return s
 
-        if not should_ignore_sep:
-            s = f"{s}{self._get_sep(p, next_p, sep)}"
+            # next char is punctuation and affects the separator
+            if np.pln[0] in PUNC and (len(np.pln) == 1 or np.pln[1] == " "):
+                return s
 
-        # TODO: Not certain we ever want to do this, it has too many false negatives
-        # if fix_punc:
-        #     s = re.sub(r"(\w)\s+([.,;:!?])", r"\1\2", s)
+        return f"{s}{self._get_sep(mp, np, sep)}"
 
-        if next_p is None and p.has_formatting:
-            if attr == "fmt":
-                s = ensure_reset(s)
-            elif attr == "esc":
-                s = esc(ensure_reset(s))
-
-        return s
-
+    @measure
     def to_str(
         self,
         sep: Optional[str] = None,
@@ -253,25 +239,56 @@ class Tinta(metaclass=_MetaTinta):
 
         return "".join(
             [
-                self._get_str(attr, p, np, sep, fix_punctuation)
-                for p, np in zip_longest(self._parts, self._parts[1:])
+                self._get_str(attr, lp, p, np, sep, fix_punctuation)
+                for lp, p, np in self._parts_tuple
             ]
         )
 
-    @deprecated("Use to_str() instead.")
-    def get_text(self, sep: str = SEP) -> str:
-        """
-        Deprecated. Use to_str() instead.
-
-        Args:
-            sep (str, optional): Used to join strings. Defaults to ' '.
+    @property
+    @measure
+    def color(self) -> str:
+        """A color string, e.g. 'white' or 'blue'.
 
         Returns:
-            str: A rich text string.
+            str: A color string or ansi color code (int)."""
+        return self._styler.color
+
+    @measure
+    def set_color(self, value: Union[int, str]):
+        """Sets the current color of the Tinta instance.
+
+        Args:
+            value (Union[int, str]): A color string or ansi color code (int),
+            e.g. 'white' or 42.
         """
-        return self.to_str(sep=sep)
+
+        self._styler.set_color(value)
 
     @property
+    @measure
+    def color_code(self) -> int:
+        """The ANSI code for the current color.
+
+        Returns:
+            int: The ANSI code for the current color."""
+        return self._styler.color_code or 0
+
+    @property
+    @measure
+    def style(self) -> List[str]:
+        """A style string, e.g. 'bold', 'dim', 'underline'.
+
+        Returns:
+            List[str]: A list of style strings."""
+        return self._styler.active_styles or []
+
+    @style.setter
+    @measure
+    def style(self, value: Union[Sequence[str], Sequence[int]]):
+        self._styler.set_styles(value)
+
+    @property
+    @measure
     def parts(self) -> List["Tinta.Part"]:
         """A list of Tinta.Part objects.
 
@@ -281,40 +298,41 @@ class Tinta(metaclass=_MetaTinta):
         return self._parts
 
     @property
+    @measure
+    def _parts_tuple(self):
+
+        for i, p in enumerate(self._parts):
+            lp = self._parts[i - 1] if i > 0 else None
+            np = self._parts[i + 1] if i < len(self._parts) - 1 else None
+            yield lp, p, np
+
+    @property
+    @measure
+    def current_part(self) -> "Tinta.Part":
+        if not self._parts:
+            self._parts.append(Tinta.Part("", Tinta.Styler(), sep=SEP))
+        return self._parts[-1]
+
+    @property
+    @measure
     def has_formatting(self) -> bool:
         """Returns True if any part has formatting.
 
         Returns:
             bool: True if any part has formatting."""
-        return any(p.has_formatting for p in self._parts)
+        return bool(next((p.has_formatting for p in self._parts), False))
 
     @property
-    @deprecated("Use parts_fmt instead.")
-    def parts_formatted(self) -> list:
-        """Returns a list of richly formated string parts
-
-        Returns:
-            str: A list of formatted strings."""
-        return [part.fmt for part in self._parts]
-
-    @property
+    @measure
     def parts_fmt(self) -> list:
         """Returns a list of richly formated string parts
 
         Returns:
             str: A list of formatted strings."""
-        return [part.fmt for part in self._parts]
+        return [p.fmt(lp, np) for lp, p, np in self._parts_tuple]
 
     @property
-    @deprecated("Use parts_pln instead.")
-    def parts_plaintext(self) -> list:
-        """Returns a list of plaintext string parts
-
-        Returns:
-            str: A list of plaintext strings."""
-        return [part.pln for part in self._parts]
-
-    @property
+    @measure
     def parts_pln(self) -> list:
         """Returns a list of plaintext string parts
 
@@ -323,26 +341,20 @@ class Tinta(metaclass=_MetaTinta):
         return [part.pln for part in self._parts]
 
     @property
+    @measure
     def parts_esc(self) -> list:
         """Returns a list of escaped formatted string parts, so that special characters are visible (i.e., backslashes are doubled).
 
         Returns:
             str: A list of esc strings."""
-        return [part.esc for part in self._parts]
+        return [p.esc(lp, np) for lp, p, np in self._parts_tuple]
 
-    @deprecated("Use to_str(plaintext=True) instead.")
-    def get_plaintext(self, sep: Optional[str] = None) -> str:
-        """Deprecated. Use to_str(plaintext=True) instead.
-
-        Args:
-            sep (str, optional): Used to join strings. Defaults to ' '.
-
-        Returns:
-            str: A plaintext string.
-        """
-        return self.to_str(sep=sep, plaintext=True)
-
-    def push(self, *s: Any, sep: Optional[str] = SEP) -> "Tinta":
+    @measure
+    def push(
+        self,
+        *s: Any,
+        sep: Optional[str] = SEP,
+    ) -> "Tinta":
         """Adds segments to this Tinta instance
 
         Args:
@@ -355,58 +367,37 @@ class Tinta(metaclass=_MetaTinta):
 
         # If an empty set of segments is passed, skip to the
         # next segment (to prevent duplicating whitespace).
-        if not s:
-            return self
+        # if not s:
+        #     return self
 
         if sep is None:
             sep = SEP
 
         # Join all s parts with the specified separator
-        pln = sep.join([str(x) for x in s])
+        pln = "" if not s else sep.join([str(x) for x in s])
 
         # Collect any prefixes that may have been set
         if self._prefixes:
             pln = "".join(self._prefixes) + pln
             self._prefixes = []
 
-        # Generate style string
-        style = "+".join(list(set(self.style))) if self.style else None
-
-        fg: Union[int, None] = 0
-        if isinstance(self.color, int):
-            fg = self.color
-        elif isinstance(self.color, str):
-            fg = self.colors.get(self.color or "default")
-
-        if not self.has_formatting and fg == 0:
-            # We don't want to add an ansi reset code if we're not adding any formatting
-            fg = None
-
         # TODO: Add support for background colors
 
-        # Generate formatted string
-        fmt = colorize(pln, fg=fg, style=style)
+        # If the current part's string is not empty, add a new part
+        if self.current_part.s:
+            self._parts.append(Tinta.Part(pln, self._styler.copy(), sep=sep))
 
-        # Append to parts list
-        self._parts.append(Tinta.Part(fmt, pln, sep))
+        # Otherwise, update the current part with additional styles and current string
+        elif not self.current_part.s:
+            self.current_part.s = pln
+            self.current_part.styler = self._styler.copy()
+            self.current_part.sep = sep
+
+        self._styler._force_clear = False
 
         return self
 
-    @deprecated(
-        "Use use push() or __call__() directly (e.g. Tinta('text')('more text')) instead."
-    )
-    def add(self, *s: Any, sep: str = SEP) -> "Tinta":
-        """Deprecated. Use push() or just __call__() (e.g. Tinta('text')('more text')) instead.
-
-        Args:
-            *s: Segments of text to add.
-            sep (str, optional): Used to join strings. Defaults to ' '.
-
-        Returns:
-            self
-        """
-        return self.push(*s, sep=sep)
-
+    @measure
     def pop(self, qty: int = 1) -> "Tinta":
         """Removes the last 'qty' segments from this Tinta instance
 
@@ -418,11 +409,8 @@ class Tinta(metaclass=_MetaTinta):
         """
         for _ in range(min(qty, len(self._parts))):
             self._parts.pop()
+        self._styler = self._parts[-1].styler.copy() if self._parts else Tinta.Styler()
         return self
-
-    @deprecated("Use pop() instead.")
-    def remove(self, qty: int = 1) -> "Tinta":
-        return self.pop(qty)
 
     @overload
     def tint(self, *s: Any, color: Union[str, int], sep: str = SEP) -> "Tinta": ...
@@ -431,11 +419,13 @@ class Tinta(metaclass=_MetaTinta):
     def tint(self, color: Union[str, int], *s: Any, sep: str = SEP) -> "Tinta": ...
 
     # pylint: disable=redefined-outer-name
+    @measure
     def tint(self, *args, **kwargs) -> "Tinta":
         """Adds segments of text colored with the specified color.
         Can be used in place of calling named color methods.
 
         Args:
+            instance (Tinta): The Tinta instance.
             color (str | int, optional): A color name or ANSI color index. Defaults to first argument.
             *s: Any: Segments of text to add.
             sep (str, optional): Used to join strings. Defaults to ' '.
@@ -444,7 +434,21 @@ class Tinta(metaclass=_MetaTinta):
             self
         """
 
-        return tint(self, *args, **kwargs)
+        # check if the first argument is a known color or valid ANSI code, or comes from kwargs
+        s = args
+        color = kwargs.get("color", None)
+        sep = kwargs.get("sep", SEP)
+        if color is None:
+            if not len(s) > 1:
+                raise AttributeError(
+                    "If no color is specified, tint() requires at least two arguments."
+                )
+            color = s[0]
+            s = s[1:]
+
+        self.set_color(color)
+        self.push(*s, sep=sep)
+        return self
 
     @overload
     def inspect(self, code: int, name: None = None, throw: bool = False) -> str: ...
@@ -454,6 +458,7 @@ class Tinta(metaclass=_MetaTinta):
         self, code: None = None, name: str = "default", throw: bool = False
     ) -> int: ...
 
+    @measure
     def inspect(
         self,
         code: Optional[int] = None,
@@ -490,22 +495,7 @@ class Tinta(metaclass=_MetaTinta):
                 raise e
         return None
 
-    @deprecated("Use tint() instead, setting color=<int:A valid ANSI color code>.")
-    def code(self, code: int = 0, *s: Any, sep: str = SEP) -> "Tinta":
-        """Adds segments of text colored with the specified ANSI code.
-
-        Args:
-            *s: Segments of text to add.
-            code (int, optional): An ANSI code. Defaults to 0.
-            sep (str, optional): Used to join strings. Defaults to ' '.
-
-        Returns:
-            self
-        """
-        self.color = int(code)
-        self.push(*s, sep=sep)
-        return self
-
+    @measure
     def bold(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Adds bold segments to this Tinta instance
 
@@ -516,7 +506,7 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             self
         """
-        self.style.append("bold")
+        self._styler.toggle_styles("bold")
         self.push(*s, sep=sep)
         return self
 
@@ -524,6 +514,7 @@ class Tinta(metaclass=_MetaTinta):
     def b(self, *args, **kwargs):
         return self.bold(*args, **kwargs)
 
+    @measure
     def underline(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Adds underline segments to this Tinta instance
 
@@ -534,7 +525,7 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             self
         """
-        self.style.append("underline")
+        self._styler.toggle_styles("underline")
         self.push(*s, sep=sep)
         return self
 
@@ -546,6 +537,22 @@ class Tinta(metaclass=_MetaTinta):
     def _(self, *args, **kwargs):
         return self.underline(*args, **kwargs)
 
+    @measure
+    def strikethrough(self, *s: Any, sep: str = SEP) -> "Tinta":
+        """Adds strikethrough segments to this Tinta instance
+
+        Args:
+            *s: Segments of text to add.
+            sep (str, optional): Used to join strings. Defaults to ' '.
+
+        Returns:
+            self
+        """
+        self._styler.toggle_styles("strikethrough")
+        self.push(*s, sep=sep)
+        return self
+
+    @measure
     def dim(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Adds darker (dimmed) segments to this Tinta instance
 
@@ -556,10 +563,11 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             self
         """
-        self.style.append("faint")
+        self._styler.toggle_styles("dim")
         self.push(*s, sep=sep)
         return self
 
+    @measure
     def normal(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Removes all styles, then adds segments to this Tinta instance
 
@@ -570,11 +578,28 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             self
         """
-        self.style = []
         # self._prefixes.append('\033[24m\033[21m')
+        self._styler.clear_styles()
         self.push(*s, sep=sep)
         return self
 
+    @measure
+    def default(self, *s: Any, sep: str = SEP) -> "Tinta":
+        """Removes all styles, then adds segments to this Tinta instance
+
+        Args:
+            *s: Segments of text to add.
+            sep (str, optional): Used to join strings. Defaults to ' '.
+
+        Returns:
+            self
+        """
+        # self._prefixes.append('\033[24m\033[21m')
+        self.set_color(0)
+        self.push(*s, sep=sep)
+        return self
+
+    @measure
     def clear(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Removes all styles and colors, then adds segments to this
         Tinta instance
@@ -586,18 +611,12 @@ class Tinta(metaclass=_MetaTinta):
         Returns:
             self
         """
-        self.color = 0
-        self.normal(*s, sep=sep)
+        self._styler.clear_all(force=True)
+        self.push(*s, sep=sep)
+        # self._prefixes.append('\033[24m\033[21m')
         return self
 
-    @deprecated("Use clear() instead.")
-    def reset(self, *s: Any, sep: str = SEP) -> "Tinta":
-        return self.push(*s, sep=sep)
-
-    @deprecated("Use nl() instead.")
-    def line(self, *s, sep: str = SEP) -> "Tinta":
-        return self.nl(*s, sep=sep)
-
+    @measure
     def nl(self, *s, sep: str = SEP) -> "Tinta":
         """Adds segments to this Tinta instance, preceded by a new line.
 
@@ -612,6 +631,7 @@ class Tinta(metaclass=_MetaTinta):
         self.push(*s, sep=sep)
         return self
 
+    @measure
     def print(
         self,
         sep: Optional[str] = None,
@@ -645,7 +665,7 @@ class Tinta(metaclass=_MetaTinta):
         use_plaintext = True if plaintext or PREFER_PLAINTEXT else False
         s = self.to_str(sep=sep, plaintext=use_plaintext)
         # if s.strip() does not end with reset, add it after the last non-whitespace character
-        if not use_plaintext and not was_reset(s):
+        if not use_plaintext:
             s = ensure_reset(s)
         print(
             self.to_str(sep=sep, plaintext=use_plaintext),
@@ -657,6 +677,7 @@ class Tinta(metaclass=_MetaTinta):
         self.clear()
         self._parts = []
 
+    @measure
     def __getattr__(self, name: str) -> "Tinta":
         """Returns a tinted segment of text.
 
@@ -678,18 +699,20 @@ class Tinta(metaclass=_MetaTinta):
                     known_colors = "\n - ".join(self.colors.list_colors())
                     known_colors = f" - {known_colors}"
                     raise AttributeError(
-                        f"Attribute '{name}' not found. Did you try and access a color that doesn't exist? Available colors:\n{known_colors}"
+                        f"'{name}' not found.\nDid you try and access a color that doesn't exist? Available colors:\n{known_colors}\n"
                     ) from e
 
         return self.__getattribute__(name)  # type: ignore
 
     @staticmethod
+    @measure
     def discover(background=False):
         """Prints all 256 colors in a matrix on your system. If background is True,
         it will print background colors with numbers on top."""
         _discover(background)
 
     @staticmethod
+    @measure
     def clearline():
         """Clears the current printed line."""
 
@@ -699,6 +722,7 @@ class Tinta(metaclass=_MetaTinta):
             sys.stdout.flush()
 
     @staticmethod
+    @measure
     def up():
         """Moves up to the previous line."""
 
@@ -706,41 +730,208 @@ class Tinta(metaclass=_MetaTinta):
             sys.stdout.write(CURSOR_UP_ONE)
             sys.stdout.flush()
 
+    class Styler:
+        """A class to hold format and style config for a Tinta part."""
+
+        color: str = "default"
+        color_code: int = 0
+        bold: bool = False
+        dim: bool = False
+        italic: bool = False
+        underline: bool = False
+        blink: bool = False
+        rapid_blink: bool = False
+        invert: bool = False
+        conceal: bool = False
+        strikethrough: bool = False
+        _force_clear: bool = False
+
+        @measure
+        def __init__(
+            self,
+            *,
+            color: Union[str, int] = 0,
+            styles: List[str] = [],
+            force_clear=False,
+        ):
+
+            self.set_color(color)
+            self.set_styles(styles)
+            self._force_clear = force_clear
+
+        @measure
+        def __repr__(self):
+            color_str = f"{self.color}{{{self.color_code}}}"
+            if not self.active_styles:
+                return color_str
+            if not any([self.color, self.active_styles]):
+                return "(plain)"
+            return " - ".join([color_str, _join(*self.active_styles)])
+
+        @measure
+        def __str__(self):
+            return self.__repr__()
+
+        @measure
+        def __eq__(self, other):
+            if not isinstance(other, Tinta.Styler):
+                return False
+            return (
+                self.color == other.color and self.active_styles == other.active_styles
+            )
+
+        @measure
+        def copy(self):
+            new = self.__new__(self.__class__)
+            new.color = self.color
+            new.color_code = self.color_code
+            for k in ANSI_STYLES:
+                setattr(new, k, getattr(self, k))
+            return new
+
+        @property
+        @measure
+        def active_styles(self) -> List[str]:
+            """Returns a list of active styles."""
+            return [st for st in ANSI_STYLES if getattr(self, st, None)]
+
+        @property
+        @measure
+        def inactive_styles(self) -> List[str]:
+            """Returns a list of inactive styles."""
+            return [st for st in ANSI_STYLES if not getattr(self, st, None)]
+
+        @measure
+        def set_color(self, color: Union[str, int]):
+
+            if isinstance(color, str):
+                code = Tinta.colors.get(color)
+                self.color = (
+                    Tinta.colors.reverse_get(code, ignore_errors=True)
+                    if is_ansi_str(color)
+                    else color
+                )
+                self.color_code = code
+            else:
+                self.color = Tinta.colors.reverse_get(color, ignore_errors=True)
+                self.color_code = color
+
+        @measure
+        def set_styles(self, styles: Union[Sequence[str], Sequence[int]]):
+
+            from .stylize import validate_styles
+
+            styles = validate_styles(*styles)
+
+            for k in styles:
+                setattr(self, k, True)
+
+        @measure
+        def enable_styles(self, *styles: str):
+            from .stylize import validate_styles
+
+            styles = validate_styles(*styles)
+            for style in styles:
+                setattr(self, style, True)
+
+        @measure
+        def disable_styles(self, *styles: str):
+            from .stylize import validate_styles
+
+            styles = validate_styles(*styles)
+            for style in styles:
+                setattr(self, style, False)
+
+        @measure
+        def toggle_styles(self, *styles: str):
+            from .stylize import validate_styles
+
+            styles = validate_styles(*styles)
+            for style in styles:
+                setattr(self, style, not getattr(self, style))
+
+        @measure
+        def clear_styles(self):
+            for k in ANSI_STYLES:
+                setattr(self, k, False)
+
+        @measure
+        def clear_all(self, force: bool = False):
+            for k in ANSI_STYLES:
+                setattr(self, k, False)
+            self.set_color(0)
+            self._force_clear = force
+
     class Part:
         """A segment part of text, intended to be joined together
         for a print statement.
 
         Args:
-            fmt (str):      A formatted string of text.
-            p (str):        A plaintext representation of fmt.
-            sep (str):      Used to join segment strings. Defaults to ' '.
+            s (str):                    A segment of unstyled text.
+            styler: (Tinta.Styler):     A Tinta.Styler object.
+            sep (str):                  Used to join segment strings. Defaults to ' '.
         """
 
-        def __init__(self, fmt: str, pln: str, sep: str = SEP):
-            self.fmt = fmt
-            self.pln = pln
+        @measure
+        def __init__(
+            self,
+            s: str,
+            styler: "Optional[Tinta.Styler]" = None,
+            sep: str = SEP,
+        ):
+            self.s = s
+            self.styler = styler or Tinta.Styler()
             self.sep = sep
 
+        @measure
         def __str__(self):
-            return self.fmt
+            return self.s
 
+        @measure
         def __repr__(self):
             return self.__str__()
 
-        def __eq__(self, other) -> bool:
+        @measure
+        def __eq__(self, other):
             if not isinstance(other, Tinta.Part):
                 return False
-            return self.fmt == other.fmt and self.pln == other.pln
+            return self.s == other.s
 
         @property
-        def esc(self):
-            return esc(self.fmt)
+        @measure
+        def has_formatting(self):
+            return bool(self.styler.active_styles or self.styler.color_code)
 
         @property
-        def has_formatting(self) -> bool:
-            return self.fmt != self.pln
+        @measure
+        def color(self):
+            return self.styler.color
+
+        @property
+        # @measure
+        def color_code(self):
+            return self.styler.color_code
+
+        @property
+        @measure
+        def style(self):
+            return self.styler.active_styles
+
+        @property
+        @measure
+        def pln(self):
+            return self.s
+
+        @measure
+        def fmt(self, lp: "Optional[Tinta.Part]", np: "Optional[Tinta.Part]"):
+            return stylize(self.s, lp, self, np)
+
+        @measure
+        def esc(self, lp: "Optional[Tinta.Part]", np: "Optional[Tinta.Part]"):
+            return esc(self.fmt(lp, np))
 
     @staticmethod
+    @measure
     def strip_ansi(s: str) -> str:
         """A utility method that strips ANSI escape codes from a string, converting a styled string into plaintext."""
         return re.sub(
@@ -748,18 +939,21 @@ class Tinta(metaclass=_MetaTinta):
         )
 
     @classmethod
+    @measure
     def ljust(cls, s: str, width: int, fillchar: str = " ") -> str:
         """Returns a string left justified in a field of a specified width, accounting for ansi formatting."""
         chars_to_add = width - len(cls.strip_ansi(s))
         return f"{s}{str(fillchar or '') * chars_to_add}"
 
     @classmethod
+    @measure
     def rjust(cls, s: str, width: int, fillchar: str = " ") -> str:
         """Returns a string right justified in a field of a specified width, accounting for ansi formatting."""
         chars_to_add = width - len(cls.strip_ansi(s))
         return f"{str(fillchar or '') * chars_to_add}{s}"
 
 
+@measure
 def esc(string: str, replace: bool = False) -> str:
     """Returns the raw representation of a string. If replace is true,
     replace a double backslash with a single backslash."""

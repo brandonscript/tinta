@@ -32,3 +32,15 @@ if os.getenv("_PYTEST_RAISE", "0") != "0":
     @pytest.hookimpl(tryfirst=True)
     def pytest_internalerror(excinfo):
         raise excinfo.value
+
+
+def pytest_addoption(parser):
+    parser.addoption("--perf", action="store_true", help="measure performance of tests")
+
+
+@pytest.fixture(scope="session")
+def perf(request):
+    import tinta.constants as C
+
+    if request.config.option.perf is True:
+        C.PERF_MEASURE = True

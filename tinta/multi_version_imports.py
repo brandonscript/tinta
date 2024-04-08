@@ -25,15 +25,7 @@ if sys.version_info >= (3, 10):
 else:
     GenericCallable = Any
 
-# Deprecated
-try:
-    from warnings import deprecated
-except ImportError:
-    from deprecated import deprecated
-deprecated = deprecated
-
 all = [
-    deprecated,
     GenericCallable,
     Literal,
     T,
