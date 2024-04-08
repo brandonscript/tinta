@@ -16,30 +16,27 @@
 import configparser
 import sys
 from pathlib import Path
-from typing import List, Optional, Type, Union
+from typing import Dict, List, Optional, Type, Union
 
 from .stylize import ansi_color_to_int, is_ansi_str
 from .typ import MissingColorError
-from .utils import measure
 
 colors_ini = configparser.ConfigParser()
 
 
-@measure
 def _alias_keys(colors: "Union[AnsiColors, Type[AnsiColors]]", search: str, repl: str):
     """Sets up an alias key for a color."""
 
     for k in (k for k in colors_ini["colors"].keys() if search.lower() in k.lower()):
         alias_key = k.replace(search.lower(), repl.lower())
-        if alias_key not in colors_ini["colors"] and alias_key not in colors.__dict__:
-            if isinstance(colors, AnsiColors):
-                colors.__setattr__(alias_key, int(colors_ini["colors"][k]))
-            else:
-                setattr(colors, alias_key, int(colors_ini["colors"][k]))
+        if (
+            alias_key not in colors_ini["colors"]
+            and alias_key not in colors._dict_colors
+        ):
+            colors._dict_colors[alias_key] = int(colors_ini["colors"][k])
             colors_ini["colors"][alias_key] = colors_ini["colors"][k]
 
 
-@measure
 def _check_path(path: Optional[Union[str, Path]] = None):
     """Loads colors from a file."""
     path = Path(path) if path else Path(__file__).parent / "colors.ini"
@@ -82,8 +79,9 @@ class AnsiColors:
 
     _initialized = False
     _colors_ini_path = None
+    _dict_colors: Dict[str, int] = {}
+    _list_colors: List[str] = []
 
-    @measure
     def __init__(self, path: Optional[Union[str, Path]] = None):
 
         if not AnsiColors._initialized:
@@ -93,18 +91,29 @@ class AnsiColors:
             AnsiColors._initialized = True
 
     @classmethod
-    @measure
     def load_colors(cls, path: Union[str, Path]):
         """Loads colors from a file."""
 
         colors_ini.read(path)
-        for k, v in colors_ini["colors"].items():
-            setattr(cls, k, int(v))
+        cls._dict_colors = {k: int(v) for (k, v) in colors_ini["colors"].items()}
+        # Check if any of the color names loaded match the built-in methods. If so, raise an error.
+        # for col in loaded_colors.keys():
+        #     if hasattr(cls, col):
+        #         # and not str(getattr(cls, col)).startswith(
+        #         #     "functools.partial(<bound method Tinta.tint"
+        #         # ):
+        #         # if the color is a 'tint' method, update it
+        #         raise AttributeError(
+        #             f"Cannot overwrite built-in method '{col}' with color name. Please rename the color in '{path}'."
+        #         )
+
+        # # Add the loaded colors class
+        # for k, v in colors_ini["colors"].items():
+        #     setattr(cls, k, int(v))
 
         _alias_keys(cls, "gray", "grey")
         _alias_keys(cls, "grey", "gray")
 
-    @measure
     def get(self, color: str) -> int:
         """Returns the ANSI code for a color.
 
@@ -121,12 +130,11 @@ class AnsiColors:
         if is_ansi_str(color):
             return ansi_color_to_int(color)
 
-        if color not in colors_ini["colors"]:
+        if color not in self._dict_colors:
             raise MissingColorError(f"Color '{color}' not found in colors.ini.")
 
-        return int(getattr(self, color))
+        return self._dict_colors[color]
 
-    @measure
     def reverse_get(self, code: int, ignore_errors: bool = False) -> str:
         """Returns the color name for an ANSI code.
 
@@ -141,8 +149,8 @@ class AnsiColors:
         if code == 0:
             return "default"
 
-        for k, v in colors_ini["colors"].items():
-            if int(v) == code:
+        for k, v in self._dict_colors.items():
+            if v == code:
                 return k
 
         if not ignore_errors:
@@ -152,7 +160,12 @@ class AnsiColors:
 
         return "[undefined color]"
 
-    @measure
     def list_colors(self) -> List[str]:
         """Returns a list of all colors in the colors.ini file."""
-        return list(colors_ini["colors"].keys())
+        return list(self._dict_colors.keys())
+
+    def dict_colors(self) -> Dict[str, int]:
+        """Returns a dictionary of all colors in the colors.ini file."""
+        if not self._dict_colors:
+            self._dict_colors = {k: int(v) for (k, v) in colors_ini["colors"].items()}
+        return self._dict_colors

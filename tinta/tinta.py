@@ -22,7 +22,7 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, cast, Dict, List, Optional, overload, Sequence, Union
+from typing import Any, List, Optional, overload, Sequence, Union
 
 from .ansi import AnsiColors
 from .constants import (
@@ -36,9 +36,8 @@ from .constants import (
     STEALTH,
 )
 from .discover import discover as _discover
-from .stylize import _join, ensure_reset, is_ansi_str, stylize
+from .stylize import _join, ensure_reset, is_ansi_str, stylize, tint
 from .typ import copy_kwargs, MissingColorError, StringType
-from .utils import measure
 
 config = configparser.ConfigParser()
 
@@ -46,33 +45,18 @@ config = configparser.ConfigParser()
 class _MetaTinta(type):
 
     _initialized = False
-    _known_colors: Dict[str, Any] = {}
-    colors: AnsiColors
+    _colors: AnsiColors
 
     def __init__(cls, name, bases, dct):
         super(_MetaTinta, cls).__init__(name, bases, dct)
-        cls.colors = AnsiColors()
 
-        # Inject ANSI helper functions
         if not cls._initialized:
-            cls._known_colors = vars(cls.colors)
+            cls._colors = AnsiColors()
             cls._initialized = True
-        for c in cls._known_colors:
-            setattr(cls, c, functools.partial(tint, color=c))
 
     def load_colors(cls, path: Union[str, Path]):
-        loaded_colors = AnsiColors(path)
-
-        # Check if any of the color names loaded match the built-in methods. If so, raise an error.
-        for col in loaded_colors.list_colors():
-            if hasattr(cls, col):
-                raise AttributeError(
-                    f"Cannot overwrite built-in method '\
-                        {col}' with color name. Please rename the color in '{path}'."
-                )
-
-        # Add the loaded colors to the Tinta class
-        cls.colors = loaded_colors
+        cls._initialized = False
+        cls._colors = AnsiColors(path)
 
 
 class Tinta(metaclass=_MetaTinta):
@@ -116,7 +100,6 @@ class Tinta(metaclass=_MetaTinta):
         print():                    Prints the output of a Tinta instance, then clears.
     """
 
-    @measure
     def __init__(
         self,
         *s: Any,
@@ -133,6 +116,16 @@ class Tinta(metaclass=_MetaTinta):
             sep (str, optional): Used to join strings. Defaults to ' '.
         """
 
+        # Inject ANSI helper functions
+        for c in Tinta._colors.dict_colors():
+            if hasattr(self, c) and not str(getattr(self, c)).startswith(
+                "functools.partial(<bound method Tinta.tint"
+            ):
+                raise AttributeError(
+                    f"Cannot overwrite built-in method '{c}' with color name. Please rename the color in '{Tinta._colors._colors_ini_path}'."
+                )
+            setattr(self, c, functools.partial(self.tint, color=c))
+
         self._styler = Tinta.Styler(color=color, styles=styles)
         self._parts: List["Tinta.Part"] = []
         self._prefixes: List[str] = []
@@ -140,11 +133,9 @@ class Tinta(metaclass=_MetaTinta):
         if s:
             self.push(*s, sep=sep)
 
-    @measure
     def __call__(self, *s: Any, sep: str = SEP) -> "Tinta":
         return self.push(*s, sep=sep)
 
-    @measure
     def __repr__(self) -> str:
         """Generates a string representation of the current
         Tinta instance.
@@ -154,7 +145,6 @@ class Tinta(metaclass=_MetaTinta):
         """
         return str(self.to_str(plaintext=True))
 
-    @measure
     def __str__(self) -> str:
         """Generates a string representation of the current
         Tinta instance, colorized.
@@ -164,7 +154,6 @@ class Tinta(metaclass=_MetaTinta):
 
         return self.to_str()
 
-    @measure
     def _get_sep(
         self,
         mp: "Tinta.Part",
@@ -175,7 +164,6 @@ class Tinta(metaclass=_MetaTinta):
             return ""
         return sep if sep is not None else mp.sep
 
-    @measure
     def _get_str(
         self,
         attr: StringType,
@@ -211,7 +199,6 @@ class Tinta(metaclass=_MetaTinta):
 
         return f"{s}{self._get_sep(mp, np, sep)}"
 
-    @measure
     def to_str(
         self,
         sep: Optional[str] = None,
@@ -245,7 +232,6 @@ class Tinta(metaclass=_MetaTinta):
         )
 
     @property
-    @measure
     def color(self) -> str:
         """A color string, e.g. 'white' or 'blue'.
 
@@ -253,7 +239,6 @@ class Tinta(metaclass=_MetaTinta):
             str: A color string or ansi color code (int)."""
         return self._styler.color
 
-    @measure
     def set_color(self, value: Union[int, str]):
         """Sets the current color of the Tinta instance.
 
@@ -265,7 +250,6 @@ class Tinta(metaclass=_MetaTinta):
         self._styler.set_color(value)
 
     @property
-    @measure
     def color_code(self) -> int:
         """The ANSI code for the current color.
 
@@ -274,7 +258,6 @@ class Tinta(metaclass=_MetaTinta):
         return self._styler.color_code or 0
 
     @property
-    @measure
     def style(self) -> List[str]:
         """A style string, e.g. 'bold', 'dim', 'underline'.
 
@@ -283,12 +266,10 @@ class Tinta(metaclass=_MetaTinta):
         return self._styler.active_styles or []
 
     @style.setter
-    @measure
     def style(self, value: Union[Sequence[str], Sequence[int]]):
         self._styler.set_styles(value)
 
     @property
-    @measure
     def parts(self) -> List["Tinta.Part"]:
         """A list of Tinta.Part objects.
 
@@ -298,7 +279,6 @@ class Tinta(metaclass=_MetaTinta):
         return self._parts
 
     @property
-    @measure
     def _parts_tuple(self):
 
         for i, p in enumerate(self._parts):
@@ -307,14 +287,12 @@ class Tinta(metaclass=_MetaTinta):
             yield lp, p, np
 
     @property
-    @measure
     def current_part(self) -> "Tinta.Part":
         if not self._parts:
             self._parts.append(Tinta.Part("", Tinta.Styler(), sep=SEP))
         return self._parts[-1]
 
     @property
-    @measure
     def has_formatting(self) -> bool:
         """Returns True if any part has formatting.
 
@@ -323,7 +301,6 @@ class Tinta(metaclass=_MetaTinta):
         return bool(next((p.has_formatting for p in self._parts), False))
 
     @property
-    @measure
     def parts_fmt(self) -> list:
         """Returns a list of richly formated string parts
 
@@ -332,7 +309,6 @@ class Tinta(metaclass=_MetaTinta):
         return [p.fmt(lp, np) for lp, p, np in self._parts_tuple]
 
     @property
-    @measure
     def parts_pln(self) -> list:
         """Returns a list of plaintext string parts
 
@@ -341,7 +317,6 @@ class Tinta(metaclass=_MetaTinta):
         return [part.pln for part in self._parts]
 
     @property
-    @measure
     def parts_esc(self) -> list:
         """Returns a list of escaped formatted string parts, so that special characters are visible (i.e., backslashes are doubled).
 
@@ -349,7 +324,6 @@ class Tinta(metaclass=_MetaTinta):
             str: A list of esc strings."""
         return [p.esc(lp, np) for lp, p, np in self._parts_tuple]
 
-    @measure
     def push(
         self,
         *s: Any,
@@ -397,7 +371,6 @@ class Tinta(metaclass=_MetaTinta):
 
         return self
 
-    @measure
     def pop(self, qty: int = 1) -> "Tinta":
         """Removes the last 'qty' segments from this Tinta instance
 
@@ -418,8 +391,6 @@ class Tinta(metaclass=_MetaTinta):
     @overload
     def tint(self, color: Union[str, int], *s: Any, sep: str = SEP) -> "Tinta": ...
 
-    # pylint: disable=redefined-outer-name
-    @measure
     def tint(self, *args, **kwargs) -> "Tinta":
         """Adds segments of text colored with the specified color.
         Can be used in place of calling named color methods.
@@ -434,21 +405,7 @@ class Tinta(metaclass=_MetaTinta):
             self
         """
 
-        # check if the first argument is a known color or valid ANSI code, or comes from kwargs
-        s = args
-        color = kwargs.get("color", None)
-        sep = kwargs.get("sep", SEP)
-        if color is None:
-            if not len(s) > 1:
-                raise AttributeError(
-                    "If no color is specified, tint() requires at least two arguments."
-                )
-            color = s[0]
-            s = s[1:]
-
-        self.set_color(color)
-        self.push(*s, sep=sep)
-        return self
+        return tint(self, *args, **kwargs)
 
     @overload
     def inspect(self, code: int, name: None = None, throw: bool = False) -> str: ...
@@ -458,7 +415,6 @@ class Tinta(metaclass=_MetaTinta):
         self, code: None = None, name: str = "default", throw: bool = False
     ) -> int: ...
 
-    @measure
     def inspect(
         self,
         code: Optional[int] = None,
@@ -484,18 +440,17 @@ class Tinta(metaclass=_MetaTinta):
             if code is not None:
                 if code == 0:
                     return "default"
-                return self.colors.reverse_get(code)
+                return self._colors.reverse_get(code)
 
             elif name is not None:
                 if name == "default":
                     return 0
-                return self.colors.get(name)
+                return self._colors.get(name)
         except MissingColorError as e:
             if throw:
                 raise e
         return None
 
-    @measure
     def bold(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Adds bold segments to this Tinta instance
 
@@ -514,7 +469,6 @@ class Tinta(metaclass=_MetaTinta):
     def b(self, *args, **kwargs):
         return self.bold(*args, **kwargs)
 
-    @measure
     def underline(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Adds underline segments to this Tinta instance
 
@@ -537,7 +491,6 @@ class Tinta(metaclass=_MetaTinta):
     def _(self, *args, **kwargs):
         return self.underline(*args, **kwargs)
 
-    @measure
     def strikethrough(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Adds strikethrough segments to this Tinta instance
 
@@ -552,7 +505,6 @@ class Tinta(metaclass=_MetaTinta):
         self.push(*s, sep=sep)
         return self
 
-    @measure
     def dim(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Adds darker (dimmed) segments to this Tinta instance
 
@@ -567,7 +519,6 @@ class Tinta(metaclass=_MetaTinta):
         self.push(*s, sep=sep)
         return self
 
-    @measure
     def normal(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Removes all styles, then adds segments to this Tinta instance
 
@@ -583,7 +534,6 @@ class Tinta(metaclass=_MetaTinta):
         self.push(*s, sep=sep)
         return self
 
-    @measure
     def default(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Removes all styles, then adds segments to this Tinta instance
 
@@ -599,7 +549,6 @@ class Tinta(metaclass=_MetaTinta):
         self.push(*s, sep=sep)
         return self
 
-    @measure
     def clear(self, *s: Any, sep: str = SEP) -> "Tinta":
         """Removes all styles and colors, then adds segments to this
         Tinta instance
@@ -616,7 +565,6 @@ class Tinta(metaclass=_MetaTinta):
         # self._prefixes.append('\033[24m\033[21m')
         return self
 
-    @measure
     def nl(self, *s, sep: str = SEP) -> "Tinta":
         """Adds segments to this Tinta instance, preceded by a new line.
 
@@ -631,7 +579,6 @@ class Tinta(metaclass=_MetaTinta):
         self.push(*s, sep=sep)
         return self
 
-    @measure
     def print(
         self,
         sep: Optional[str] = None,
@@ -677,7 +624,6 @@ class Tinta(metaclass=_MetaTinta):
         self.clear()
         self._parts = []
 
-    @measure
     def __getattr__(self, name: str) -> "Tinta":
         """Returns a tinted segment of text.
 
@@ -689,30 +635,28 @@ class Tinta(metaclass=_MetaTinta):
         """
 
         if not name.startswith("_"):
-            if hasattr(self.colors, name):
-                return cast("Tinta", self.tint(color=name))
+            # if hasattr(self.colors, name):
+            #     return cast("Tinta", self.tint(color=name))
 
-            else:
-                try:
-                    return self.__getattribute__(name)  # type: ignore
-                except AttributeError as e:
-                    known_colors = "\n - ".join(self.colors.list_colors())
-                    known_colors = f" - {known_colors}"
-                    raise AttributeError(
-                        f"'{name}' not found.\nDid you try and access a color that doesn't exist? Available colors:\n{known_colors}\n"
-                    ) from e
+            # else:
+            try:
+                return self.__getattribute__(name)  # type: ignore
+            except AttributeError as e:
+                known_colors = "\n - ".join(self._colors.list_colors())
+                known_colors = f" - {known_colors}"
+                raise AttributeError(
+                    f"'{name}' not found.\nDid you try and access a color that doesn't exist? Available colors:\n{known_colors}\n"
+                ) from e
 
         return self.__getattribute__(name)  # type: ignore
 
     @staticmethod
-    @measure
     def discover(background=False):
         """Prints all 256 colors in a matrix on your system. If background is True,
         it will print background colors with numbers on top."""
         _discover(background)
 
     @staticmethod
-    @measure
     def clearline():
         """Clears the current printed line."""
 
@@ -722,7 +666,6 @@ class Tinta(metaclass=_MetaTinta):
             sys.stdout.flush()
 
     @staticmethod
-    @measure
     def up():
         """Moves up to the previous line."""
 
@@ -746,7 +689,6 @@ class Tinta(metaclass=_MetaTinta):
         strikethrough: bool = False
         _force_clear: bool = False
 
-        @measure
         def __init__(
             self,
             *,
@@ -759,7 +701,6 @@ class Tinta(metaclass=_MetaTinta):
             self.set_styles(styles)
             self._force_clear = force_clear
 
-        @measure
         def __repr__(self):
             color_str = f"{self.color}{{{self.color_code}}}"
             if not self.active_styles:
@@ -768,11 +709,9 @@ class Tinta(metaclass=_MetaTinta):
                 return "(plain)"
             return " - ".join([color_str, _join(*self.active_styles)])
 
-        @measure
         def __str__(self):
             return self.__repr__()
 
-        @measure
         def __eq__(self, other):
             if not isinstance(other, Tinta.Styler):
                 return False
@@ -780,7 +719,6 @@ class Tinta(metaclass=_MetaTinta):
                 self.color == other.color and self.active_styles == other.active_styles
             )
 
-        @measure
         def copy(self):
             new = self.__new__(self.__class__)
             new.color = self.color
@@ -790,33 +728,29 @@ class Tinta(metaclass=_MetaTinta):
             return new
 
         @property
-        @measure
         def active_styles(self) -> List[str]:
             """Returns a list of active styles."""
             return [st for st in ANSI_STYLES if getattr(self, st, None)]
 
         @property
-        @measure
         def inactive_styles(self) -> List[str]:
             """Returns a list of inactive styles."""
             return [st for st in ANSI_STYLES if not getattr(self, st, None)]
 
-        @measure
         def set_color(self, color: Union[str, int]):
 
             if isinstance(color, str):
-                code = Tinta.colors.get(color)
+                code = Tinta._colors.get(color)
                 self.color = (
-                    Tinta.colors.reverse_get(code, ignore_errors=True)
+                    Tinta._colors.reverse_get(code, ignore_errors=True)
                     if is_ansi_str(color)
                     else color
                 )
                 self.color_code = code
             else:
-                self.color = Tinta.colors.reverse_get(color, ignore_errors=True)
+                self.color = Tinta._colors.reverse_get(color, ignore_errors=True)
                 self.color_code = color
 
-        @measure
         def set_styles(self, styles: Union[Sequence[str], Sequence[int]]):
 
             from .stylize import validate_styles
@@ -826,7 +760,6 @@ class Tinta(metaclass=_MetaTinta):
             for k in styles:
                 setattr(self, k, True)
 
-        @measure
         def enable_styles(self, *styles: str):
             from .stylize import validate_styles
 
@@ -834,7 +767,6 @@ class Tinta(metaclass=_MetaTinta):
             for style in styles:
                 setattr(self, style, True)
 
-        @measure
         def disable_styles(self, *styles: str):
             from .stylize import validate_styles
 
@@ -842,7 +774,6 @@ class Tinta(metaclass=_MetaTinta):
             for style in styles:
                 setattr(self, style, False)
 
-        @measure
         def toggle_styles(self, *styles: str):
             from .stylize import validate_styles
 
@@ -850,12 +781,10 @@ class Tinta(metaclass=_MetaTinta):
             for style in styles:
                 setattr(self, style, not getattr(self, style))
 
-        @measure
         def clear_styles(self):
             for k in ANSI_STYLES:
                 setattr(self, k, False)
 
-        @measure
         def clear_all(self, force: bool = False):
             for k in ANSI_STYLES:
                 setattr(self, k, False)
@@ -872,7 +801,6 @@ class Tinta(metaclass=_MetaTinta):
             sep (str):                  Used to join segment strings. Defaults to ' '.
         """
 
-        @measure
         def __init__(
             self,
             s: str,
@@ -883,55 +811,44 @@ class Tinta(metaclass=_MetaTinta):
             self.styler = styler or Tinta.Styler()
             self.sep = sep
 
-        @measure
         def __str__(self):
             return self.s
 
-        @measure
         def __repr__(self):
             return self.__str__()
 
-        @measure
         def __eq__(self, other):
             if not isinstance(other, Tinta.Part):
                 return False
             return self.s == other.s
 
         @property
-        @measure
         def has_formatting(self):
             return bool(self.styler.active_styles or self.styler.color_code)
 
         @property
-        @measure
         def color(self):
             return self.styler.color
 
         @property
-        # @measure
         def color_code(self):
             return self.styler.color_code
 
         @property
-        @measure
         def style(self):
             return self.styler.active_styles
 
         @property
-        @measure
         def pln(self):
             return self.s
 
-        @measure
         def fmt(self, lp: "Optional[Tinta.Part]", np: "Optional[Tinta.Part]"):
             return stylize(self.s, lp, self, np)
 
-        @measure
         def esc(self, lp: "Optional[Tinta.Part]", np: "Optional[Tinta.Part]"):
             return esc(self.fmt(lp, np))
 
     @staticmethod
-    @measure
     def strip_ansi(s: str) -> str:
         """A utility method that strips ANSI escape codes from a string, converting a styled string into plaintext."""
         return re.sub(
@@ -939,21 +856,18 @@ class Tinta(metaclass=_MetaTinta):
         )
 
     @classmethod
-    @measure
     def ljust(cls, s: str, width: int, fillchar: str = " ") -> str:
         """Returns a string left justified in a field of a specified width, accounting for ansi formatting."""
         chars_to_add = width - len(cls.strip_ansi(s))
         return f"{s}{str(fillchar or '') * chars_to_add}"
 
     @classmethod
-    @measure
     def rjust(cls, s: str, width: int, fillchar: str = " ") -> str:
         """Returns a string right justified in a field of a specified width, accounting for ansi formatting."""
         chars_to_add = width - len(cls.strip_ansi(s))
         return f"{str(fillchar or '') * chars_to_add}{s}"
 
 
-@measure
 def esc(string: str, replace: bool = False) -> str:
     """Returns the raw representation of a string. If replace is true,
     replace a double backslash with a single backslash."""

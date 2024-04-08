@@ -351,7 +351,7 @@ To run tests, run the following command:
 
 ```bash
 pip install pytest
-python -m pytest -xv
+python -m pytest -v
 ```
 
 ## Contributing

@@ -37,7 +37,7 @@
       "env": {
         "_PYTEST_RAISE": "1"
       },
-      "args": ["-xv"]
+      "args": ["-v"]
     },
     {
       "name": "Run Tinta tests (all versions)",

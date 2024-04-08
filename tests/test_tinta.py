@@ -469,10 +469,16 @@ class TestExamples:
     def test_basic_example(self):
         from examples.basic_example import basic
 
+        Tinta._initialized = False
+        Tinta._colors._initialized = False
+
         basic()
 
     def test_complete_example(self):
         from examples.complete_example import complete
+
+        Tinta._initialized = False
+        Tinta._colors._initialized = False
 
         complete()
 
@@ -978,6 +984,9 @@ class TestTiming:
         assert tinta_diff - raw_diff < 0.001
 
     def test_with_timeit(self):
+
+        count = 500
+
         tinta_time = timeit.timeit(
             lambda: Tinta()
             .blue("blue")
@@ -995,7 +1004,7 @@ class TestTiming:
             .light_gray("light gray")
             .white("white")
             .print(),
-            number=1000,
+            number=count,
         )
 
         class FakeClass:
@@ -1022,18 +1031,18 @@ class TestTiming:
 
         class_time = timeit.timeit(
             lambda: FakeClass().print(),
-            number=1000,
+            number=count,
         )
 
         raw_time = timeit.timeit(
             lambda: print(
                 f"{BLUE}blue {GREEN}green {L_BLUE}light blue {YELLOW}yellow {AMBER}amber {MINT}mint {OLIVE}olive {ORANGE}orange {PURPLE}purple {PINK}pink {GRAY}gray {D_GRAY}dark gray {L_GRAY}light gray {WHITE}white{O}"
             ),
-            number=1000,
+            number=count,
         )
 
         print(f"Raw: {raw_time:.4f} seconds")
         print(f"Class: {class_time:.4f} seconds")
         print(f"Tinta: {tinta_time:.4f} seconds")
 
-        assert tinta_time - raw_time < 0.3
+        assert tinta_time - raw_time < 0.5

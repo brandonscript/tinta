@@ -52,7 +52,7 @@ def sort_colors(colors: Iterable[str]) -> List[str]:
 
 def complete():
 
-    _orig_colors_ini = Tinta.colors._colors_ini_path
+    _orig_colors_ini = Tinta._colors._colors_ini_path
 
     Tinta.load_colors("examples/colors.ini")
 
@@ -166,7 +166,7 @@ def complete():
 
     print_columns(12, indent=8)
 
-    Tinta.colors._colors_ini_path = _orig_colors_ini
+    Tinta._colors._colors_ini_path = _orig_colors_ini
 
 
 if __name__ == "__main__":

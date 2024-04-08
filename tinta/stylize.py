@@ -20,28 +20,27 @@
 
 import re
 from typing import (
+    Any,
     cast,
     List,
     Optional,
+    overload,
     Tuple,
     TYPE_CHECKING,
     Union,
 )
 
-from .constants import ANSI_RESET, ANSI_RESET_OCT, ANSI_STYLES, ANSI_STYLES_OFF
+from .constants import ANSI_RESET, ANSI_RESET_OCT, ANSI_STYLES, ANSI_STYLES_OFF, SEP
 from .typ import InvalidStyleError
-from .utils import measure
 
 if TYPE_CHECKING:
     from .tinta import Tinta
 
 
-@measure
 def was_reset(s: str) -> bool:
     return s.strip().endswith(ANSI_RESET) or s.endswith(ANSI_RESET_OCT)
 
 
-@measure
 def ensure_reset(s: str, np: "Union[Tinta.Part, None]" = None) -> str:
     if was_reset(s) or (np and np.has_formatting):
         return s
@@ -49,7 +48,6 @@ def ensure_reset(s: str, np: "Union[Tinta.Part, None]" = None) -> str:
     return f"{s[:last_char_idx]}{ANSI_RESET}{s[last_char_idx:]}"
 
 
-@measure
 def _parse_rgb(s: str) -> Tuple[int, ...]:
     if not isinstance(s, str):
         raise ValueError(f"Could not parse color '{s}'")
@@ -74,7 +72,6 @@ def _parse_rgb(s: str) -> Tuple[int, ...]:
     raise ValueError(f"Could not parse color '{s}'")
 
 
-@measure
 def _join(*values: Union[int, str]) -> str:
     """
     Join a series of values with semicolons. The values
@@ -85,7 +82,6 @@ def _join(*values: Union[int, str]) -> str:
     return ";".join(str(v) for v in values).strip(";").strip()
 
 
-@measure
 def _color_code(
     spec: Union[str, int, Tuple[int, int, int], List[int]], base: int
 ) -> str:
@@ -124,7 +120,6 @@ def _color_code(
         raise ValueError(f"Could not parse color '{spec}'")
 
 
-@measure
 def _style_name(code: int) -> str:
     try:
         return ANSI_STYLES[code]
@@ -132,8 +127,7 @@ def _style_name(code: int) -> str:
         raise InvalidStyleError(f"Invalid style code '{code}'")
 
 
-@measure
-def _style_codes(style: str | int) -> Tuple[int, int]:
+def _style_codes(style: Union[str, int]) -> Tuple[int, int]:
     if isinstance(style, str):
         style = style.lower()
     on = ANSI_STYLES.index(style) + 1
@@ -141,8 +135,7 @@ def _style_codes(style: str | int) -> Tuple[int, int]:
     return on, off
 
 
-@measure
-def ansi_styles(style: str | int) -> Tuple[str, str]:
+def ansi_styles(style: Union[str, int]) -> Tuple[str, str]:
     """Returns ANSI on and off strings for a style name or code.
 
     Args:
@@ -155,7 +148,6 @@ def ansi_styles(style: str | int) -> Tuple[str, str]:
     return f"\x1b[{on}m", f"\x1b[{off}m"
 
 
-@measure
 def validate_styles(*styles: Union[int, str]) -> Tuple[str, ...]:
     """Validates a list of style names. If a style is not found in the ANSI
     styles, it is removed from the list.
@@ -176,7 +168,55 @@ def validate_styles(*styles: Union[int, str]) -> Tuple[str, ...]:
     return cast(Tuple[str, ...], tuple(_styles))
 
 
-@measure
+@overload
+def tint(
+    instance: "Tinta", *s: Any, color: Union[str, int], sep: str = SEP
+) -> "Tinta": ...
+
+
+@overload
+def tint(
+    instance: "Tinta", color: Union[str, int], *s: Any, sep: str = SEP
+) -> "Tinta": ...
+
+
+def tint(instance: "Tinta", *args, **kwargs) -> "Tinta":
+    """Adds segments of text colored with the specified color.
+    Can be used in place of calling named color methods.
+
+    Args:
+        instance (Tinta): The Tinta instance.
+        color (str | int, optional): A color name or ANSI color index. Defaults to first argument.
+        *s: Any: Segments of text to add.
+        sep (str, optional): Used to join strings. Defaults to ' '.
+
+    Returns:
+        self
+    """
+    from .tinta import Tinta
+
+    if not isinstance(instance, Tinta):
+        raise AttributeError("tint() must be called from a Tinta instance.")
+
+    self = instance
+
+    # check if the first argument is a known color or valid ANSI code, or comes from kwargs
+    s = args
+    color = kwargs.get("color", None)
+    sep = kwargs.get("sep", SEP)
+    if color is None:
+        if not len(s) > 1:
+            raise AttributeError(
+                "If no color is specified, tint() requires at least two arguments."
+            )
+        color = s[0]
+        s = s[1:]
+
+    self.set_color(color)
+    self.push(*s, sep=sep)
+    return self
+
+
 def stylize(
     s: Optional[str],
     lp: "Union[Tinta.Part, None]",
@@ -236,12 +276,10 @@ def stylize(
     return f"{left}{s[:last_char_idx]}{right}{s[last_char_idx:]}"
 
 
-@measure
 def is_ansi_str(s: str) -> bool:
     return s.startswith("\x1b[") or s.startswith("\033[")
 
 
-@measure
 def ansi_color_to_int(s: str) -> int:
     """Converts an ANSI escape sequence to a base 10 integer. Accepts both octal and decimal sequences, and from 1 to 3 segments separated by semicolons."""
 

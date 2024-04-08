@@ -30,7 +30,7 @@ jobs:
       - name: Test with pytest
         run: |
           pip install pytest
-          pytest -xv -s
+          pytest -vv -s
 
   build-newer-python:
     runs-on: ubuntu-22.04
