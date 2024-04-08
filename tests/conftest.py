@@ -52,7 +52,47 @@ def alt_colors_ini(tmp_path):
     from tinta import Tinta
 
     colors_ini = tmp_path / "colors.ini"
-    colors_ini.write_text("""[colors]\nsparkle = 195\ndragons_breath = 202\n""")
+    colors_ini.write_text(
+        """[colors]
+sparkle = 195
+dragons_breath = 202
+"""
+    )
+
+    orig_colors_ini = Tinta._colors._colors_ini_path
+
+    Tinta.load_colors(colors_ini)
+    yield colors_ini
+    Tinta.load_colors(orig_colors_ini)
+
+
+@pytest.fixture(scope="function", autouse=False)
+def clobber_colors_ini(tmp_path):
+
+    from tinta import Tinta
+
+    colors_ini = tmp_path / "colors.ini"
+    colors_ini.write_text(
+        """[colors]
+default: 256
+grey: 242
+dark_grey: 237
+light_grey: 250
+mint: 43
+green: 78
+blue: 33
+purple: 99
+amber: 214
+amber_accent: 222
+orange: 208
+orange_accent: 214
+red: 161
+red_accent: 175
+pink: 205
+light_pink: 211
+dark_pink: 89
+"""
+    )
 
     orig_colors_ini = Tinta._colors._colors_ini_path
 

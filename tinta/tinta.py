@@ -55,7 +55,6 @@ class _MetaTinta(type):
             cls._initialized = True
 
     def load_colors(cls, path: Union[str, Path]):
-        cls._initialized = False
         AnsiColors._initialized = False
         cls._colors = AnsiColors(path)
 
@@ -117,6 +116,10 @@ class Tinta(metaclass=_MetaTinta):
             sep (str, optional): Used to join strings. Defaults to ' '.
         """
 
+        self._styler = Tinta.Styler(color=color, styles=styles)
+        self._parts: List["Tinta.Part"] = []
+        self._prefixes: List[str] = []
+
         # Inject ANSI helper functions
         for c in Tinta._colors.color_dict:
             if hasattr(self, c) and not str(getattr(self, c)).startswith(
@@ -126,10 +129,6 @@ class Tinta(metaclass=_MetaTinta):
                     f"Cannot overwrite built-in method '{c}' with color name. Please rename the color in '{Tinta._colors._colors_ini_path}'."
                 )
             setattr(self, c, functools.partial(self.tint, color=c))
-
-        self._styler = Tinta.Styler(color=color, styles=styles)
-        self._parts: List["Tinta.Part"] = []
-        self._prefixes: List[str] = []
 
         if s:
             self.push(*s, sep=sep)

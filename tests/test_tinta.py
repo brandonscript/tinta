@@ -22,6 +22,7 @@
 
 import os
 import re
+import subprocess
 import time
 import timeit
 from contextlib import contextmanager
@@ -96,6 +97,39 @@ class TestInit:
             Tinta().dragons_breath("dragon's breath").to_str()
             == f"\x1b[38;5;202mdragon's breath{O}"
         )
+
+        Tinta().sparkle("sparkle").print()
+        Tinta().dragons_breath("dragon's breath").print()
+
+    def test_reloads_colors(self, alt_colors_ini):
+
+        Tinta.load_colors("tinta/colors.ini")
+        Tinta().inspect(name="grey")
+        Tinta.load_colors("examples/colors.ini")
+        Tinta().inspect(name="grey")
+        Tinta.load_colors(alt_colors_ini)
+        Tinta().inspect(name="sparkle")
+        Tinta.load_colors("examples/colors.ini")
+        Tinta().inspect(name="grey")
+
+        try:
+            subprocess.check_output(
+                """pipenv run python -c \"from tinta import Tinta
+Tinta.load_colors('examples/colors.ini')
+Tinta.load_colors('examples/colors.ini')
+Tinta().inspect(name='grey')
+Tinta().grey('grey').print()\"""",
+                shell=True,
+                stderr=subprocess.STDOUT,
+                env=os.environ,
+            )
+        except subprocess.CalledProcessError as e:
+            raise Exception(e.stdout)
+
+    def test_loads_colors_with_clobbering(self, clobber_colors_ini):
+        with pytest.raises(AttributeError, match="Cannot overwrite built-in method"):
+            Tinta.load_colors(clobber_colors_ini)
+            assert Tinta().grey("grey").to_str() == f"\x1b[38;5;242mgrey{O}"
 
 
 class TestBasicColorizing:
