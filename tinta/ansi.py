@@ -60,7 +60,8 @@ def _check_path(path: Optional[Union[str, Path]] = None):
 
     if not path.exists():
         raise FileNotFoundError(
-            f"Tinta failed to load colors, could not find 'colors.ini' in cwd or in PYTHONPATH. Please provide a valid path to a colors.ini file."
+            "Tinta failed to load colors, could not find 'colors.ini' in cwd or in PYTHONPATH. \
+            Please provide a valid path to a colors.ini file."
         )
     return path
 
@@ -85,6 +86,7 @@ class AnsiColors:
 
         if not AnsiColors._initialized:
             path = _check_path(path)
+            assert path, "AnsiColors(path): path cannot be None"
             AnsiColors.load_colors(path)
             AnsiColors._colors_ini_path = path
             AnsiColors._initialized = True
@@ -96,20 +98,6 @@ class AnsiColors:
         colors_ini["colors"] = {}
         colors_ini.read(path)
         cls._color_dict = {k: int(v) for (k, v) in colors_ini["colors"].items()}
-        # Check if any of the color names loaded match the built-in methods. If so, raise an error.
-        # for col in loaded_colors.keys():
-        #     if hasattr(cls, col):
-        #         # and not str(getattr(cls, col)).startswith(
-        #         #     "functools.partial(<bound method Tinta.tint"
-        #         # ):
-        #         # if the color is a 'tint' method, update it
-        #         raise AttributeError(
-        #             f"Cannot overwrite built-in method '{col}' with color name. Please rename the color in '{path}'."
-        #         )
-
-        # # Add the loaded colors class
-        # for k, v in colors_ini["colors"].items():
-        #     setattr(cls, k, int(v))
 
         _alias_keys(cls, "gray", "grey")
         _alias_keys(cls, "grey", "gray")

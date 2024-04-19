@@ -23,19 +23,19 @@ StringType = Literal["pln", "esc", "fmt"]  # type: ignore
 class MissingColorError(Exception):
     """Raised when a color is not found in the colors.ini file."""
 
-    pass
+    ...
 
 
 class InvalidStyleError(Exception):
     """Raised when an invalid style is passed to a function."""
 
-    pass
+    ...
 
 
 class InvalidColorError(Exception):
     """Raised when an invalid color is passed to a function."""
 
-    pass
+    ...
 
 
 def copy_kwargs(func: GenericCallable) -> Callable[..., GenericCallable]:

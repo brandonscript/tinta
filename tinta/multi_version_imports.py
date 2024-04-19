@@ -25,9 +25,9 @@ if sys.version_info >= (3, 10):
 else:
     GenericCallable = Any
 
-all = [
-    GenericCallable,
-    Literal,
-    T,
-    TypeVar,
+__all__ = [
+    "GenericCallable",
+    "Literal",
+    "T",
+    "TypeVar",
 ]

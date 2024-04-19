@@ -106,7 +106,7 @@ def _color_code(
     if isinstance(spec, str):
         spec = spec.strip().lower()
 
-    if spec == "default" or spec == 0:
+    if spec in ("default", 0):
         return "0"
     elif isinstance(spec, int) and 1 <= spec <= 255:
         return _join(base + 8, 5, spec)
@@ -123,8 +123,8 @@ def _color_code(
 def _style_name(code: int) -> str:
     try:
         return ANSI_STYLES[code]
-    except IndexError:
-        raise InvalidStyleError(f"Invalid style code '{code}'")
+    except IndexError as e:
+        raise InvalidStyleError(f"Invalid style code '{code}'") from e
 
 
 def _style_codes(style: Union[str, int]) -> Tuple[int, int]:
@@ -160,7 +160,7 @@ def validate_styles(*styles: Union[int, str]) -> Tuple[str, ...]:
 
     _styles = [str(s).lower() for s in _styles]
 
-    if not all([s in ANSI_STYLES for s in _styles]):
+    if not all(s in ANSI_STYLES for s in _styles):
         available_styles = ", ".join([f"'{s}'" for s in ANSI_STYLES])
         err = f"Invalid style string '{_styles}', must be one of {available_styles}."
         raise InvalidStyleError(err)
@@ -205,7 +205,7 @@ def tint(instance: "Tinta", *args, **kwargs) -> "Tinta":
     color = kwargs.get("color", None)
     sep = kwargs.get("sep", SEP)
     if color is None:
-        if not len(s) > 1:
+        if len(s) < 2:
             raise AttributeError(
                 "If no color is specified, tint() requires at least two arguments."
             )
@@ -257,15 +257,13 @@ def stylize(
         if (
             not np
             or not np.has_formatting
-            or mp.styler._force_clear
+            or mp.styler.force_clear
             or bool(mp.style and not np.style and mp.color_code != np.color_code)
         ):
             off = "0"
         elif mp.style != np.style:
             styles_not_in_n = [s for s in mp.style if s not in np.style]
-            off = _join(
-                *list(sorted(set([_style_codes(st)[1] for st in styles_not_in_n])))
-            )
+            off = _join(*sorted({_style_codes(st)[1] for st in styles_not_in_n}))
 
     # Apply formatting
     left = f"\x1b[{on}m" if on else ""
@@ -297,7 +295,7 @@ def ansi_color_to_int(s: str) -> int:
     seg = s.split(";")
     if len(seg) >= 3:
         ch = seg[-3]
-        if ch == "38" or ch == "48":
+        if ch in ("38", "48"):
             return int(seg[-1])
         return int(seg[-1])
 

@@ -1,9 +1,17 @@
 #!/bin/bash
 # check for --test option
 TEST=false
+VERBOSE=""
 if [ "$1" = "--test" ]; then
     echo -e "[test mode] – will publish to test.pypi.org\n"
     TEST=true
+    shift
+fi
+
+# check for --verbose option
+if [ "$1" = "--verbose" ]; then
+    VERBOSE="--verbose"
+    shift
 fi
 
 # grab credentials from .pypirc file in .
@@ -29,7 +37,7 @@ PASSWORD=$(echo $PASSWORD | xargs)
 LATEST=$(ls -t $ROOT/dist/*.gz | head -n1)
 
 if [ "$TEST" = true ]; then
-    python3 -m twine upload --repository-url https://test.pypi.org/legacy/ --username $USERNAME --password $PASSWORD $LATEST
+    python3 -m twine upload --repository-url https://test.pypi.org/legacy/ --username $USERNAME --password $PASSWORD $VERBOSE $LATEST
 else
-    python3 -m twine upload --username $USERNAME --password $PASSWORD $LATEST
+    python3 -m twine upload --username $USERNAME --password $PASSWORD $VERBOSE $LATEST
 fi
