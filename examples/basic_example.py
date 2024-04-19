@@ -62,7 +62,7 @@ def basic():
     # Here we tried to print in pink, but used the plaintext arg in print.
     # You'll notice we still support Python's multiline \ feature.
     Tinta().pink(
-        "But it's equally important to be able " "to print things in plaintext, too"
+        "But it's equally important to be able ", "to print things in plaintext, too"
     ).print(plaintext=True)
 
     # Let's try some f-strings.
@@ -83,7 +83,7 @@ def basic():
 
     # You could do the same using multiple segments, or ()
     Tinta().vanilla(
-        "I like ice cream", "it comes in all sorts" "of great and yummy flavors."
+        "I like ice cream", "it comes in all sorts", "of great and yummy flavors."
     ).print()
 
     (

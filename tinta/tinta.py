@@ -126,7 +126,8 @@ class Tinta(metaclass=_MetaTinta):
                 "functools.partial(<bound method Tinta.tint"
             ):
                 raise AttributeError(
-                    f"Cannot overwrite built-in method '{c}' with color name. Please rename the color in '{Tinta._colors._colors_ini_path}'."
+                    f"Cannot overwrite built-in method '{c}' with color name. \
+                    Please rename the color in '{Tinta._colors._colors_ini_path}'."
                 )
             setattr(self, c, functools.partial(self.tint, color=c))
 
@@ -367,7 +368,7 @@ class Tinta(metaclass=_MetaTinta):
             self.current_part.styler = self._styler.copy()
             self.current_part.sep = sep
 
-        self._styler._force_clear = False
+        self._styler.force_clear = False
 
         return self
 
@@ -645,7 +646,8 @@ class Tinta(metaclass=_MetaTinta):
                 known_colors = "\n - ".join(self._colors.color_list)
                 known_colors = f" - {known_colors}"
                 raise AttributeError(
-                    f"'{name}' not found.\nDid you try and access a color that doesn't exist? Available colors:\n{known_colors}\n"
+                    f"'{name}' not found.\nDid you try and access a color \
+                    that doesn't exist? Available colors:\n{known_colors}\n"
                 ) from e
 
         return self.__getattribute__(name)  # type: ignore
@@ -687,7 +689,7 @@ class Tinta(metaclass=_MetaTinta):
         invert: bool = False
         conceal: bool = False
         strikethrough: bool = False
-        _force_clear: bool = False
+        force_clear: bool = False
 
         def __init__(
             self,
@@ -699,7 +701,7 @@ class Tinta(metaclass=_MetaTinta):
 
             self.set_color(color)
             self.set_styles(styles)
-            self._force_clear = force_clear
+            self.force_clear = force_clear
 
         def __repr__(self):
             color_str = f"{self.color}{{{self.color_code}}}"
@@ -789,7 +791,7 @@ class Tinta(metaclass=_MetaTinta):
             for k in ANSI_STYLES:
                 setattr(self, k, False)
             self.set_color(0)
-            self._force_clear = force
+            self.force_clear = force
 
     class Part:
         """A segment part of text, intended to be joined together
