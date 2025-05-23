@@ -30,7 +30,7 @@ with Path("README.md").open(encoding="utf-8") as f:
 
 setup(
     name="tinta",
-    version="0.1.7b5-post1",
+    version="0.1.7",
     description="Tinta, a magical console output tool.",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -42,16 +42,13 @@ setup(
     license="MIT",
     packages=["tinta"],
     keywords="console colors ansi print terminal development",
-    python_requires=">=3.6",
+    python_requires=">=3.9",
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Environment :: Console",
         "Topic :: Utilities",
         "License :: OSI Approved :: MIT License",
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",

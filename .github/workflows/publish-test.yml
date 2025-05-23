@@ -18,8 +18,8 @@ on:
   push:
     branches:
       - never
-    tags:
-      - "*"
+    # tags:
+    #   - "*"
   # release:
   #   types: [published]
 

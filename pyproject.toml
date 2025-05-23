@@ -21,7 +21,7 @@
 
 [project]
 name = "tinta"
-version = "0.1.7b5-post1"
+version = "0.1.7"
 description = "Tinta, a magical console output tool."
 authors = [{ name = "Brandon Shelley", email = "brandon@pacificaviator.co" }]
 license = "MIT"
@@ -43,9 +43,6 @@ classifiers = [
   "Environment :: Console",
   "Topic :: Utilities",
   "License :: OSI Approved :: MIT License",
-  "Programming Language :: Python :: 3.6",
-  "Programming Language :: Python :: 3.7",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -53,12 +50,21 @@ classifiers = [
   "Programming Language :: Python :: 3.13",
 ]
 
+[tool.poetry]
+name = "tinta"
+version = "0.1.7"
+description = "Tinta, a magical console output tool."
+authors = ["Brandon Shelley <brandon@pacificaviator.co>"]
+license = "MIT"
+readme = "README.md"
+
 [project.urls]
 homepage = "https://github.com/brandonscript/tinta"
 repository = "https://github.com/brandonscript/tinta"
 
+
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "poetry-core"]
 build-backend = "hatchling.build"
 
 [tool.hatchling.build]
@@ -67,12 +73,12 @@ include = ["tinta/**/*.py", "tinta/**/*.pyi", "tinta/colors.ini", "/tests"]
 exclude = [".*", "dist"]
 
 [tool.hatchling.dependencies]
-python = "^3.6"
+python = "^3.9 || ^3.10 || ^3.11 || ^3.12 || ^3.13"
 
 [tool.hatchling.dev-dependencies]
-pytest = "^6.2.4"
-twine = "^3.4.2"
-wheel = "^0.36.2"
+pytest = "*"
+twine = "*"
+wheel = "*"
 
 [tool.mypy]
 python_version = "3.11"
@@ -90,7 +96,7 @@ ignore_missing_imports = false
 check_untyped_defs = true
 
 [tool.black]
-target-version = ['py311']
+target-version = ['py312']
 preview = true
 
 [tool.isort]
@@ -103,7 +109,7 @@ force_sort_within_sections = false
 
 [tool.pyright]
 # verboseOutput = true
-pythonVersion = "3.11"
+pythonVersion = "3.12"
 extraPaths = [".venv/lib/python3.11/site-packages", "tinta", "**/*.py"]
 reportUnusedImport = "error"
 reportUnusedClass = "error"
@@ -160,3 +166,28 @@ testpaths = ["tests"]
 python_files = ["*_test.py", "test_*.py"]
 python_classes = ["test_", "_test", "Test*"]
 python_functions = ["test_", "_test"]
+
+[tool.poetry.dependencies]
+python = "^3.9 || ^3.10 || ^3.11 || ^3.12 || ^3.13"
+
+[tool.poetry.group.dev.dependencies]
+ruff = "*"
+black = "*"
+pytest = "*"
+mypy = "*"
+pipenv = "*"
+pylint = "*"
+autopep8 = "*"
+pytest-cov = "*"
+twine = "*"
+hatchling = "*"
+setuptools = "*"
+wheel = "*"
+
+[tool.hatchling.scripts]
+test = "pytest"
+build = "./dist/build.sh"
+publish-test = "./dist/publish.sh --test"
+publish-real = "./dist/publish.sh"
+lint-check = "ruff check tinta"
+lint-fix = "ruff fix tinta"
