@@ -63,8 +63,9 @@ jobs:
       - name: Build package
         if: steps.tag_check.outputs.exists == 'false'
         run: |
+          rm -rf dist/
           python -m build
-          twine check dist/*
+          twine check dist/*.whl dist/*.tar.gz
 
       - name: Create GitHub Release
         if: steps.tag_check.outputs.exists == 'false'

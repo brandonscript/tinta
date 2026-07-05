@@ -66,5 +66,9 @@
   ],
   "python.analysis.autoSearchPaths": true,
   "python.languageServer": "Pylance",
-  "python.formatting.provider": "ruff"
+  "python.formatting.provider": "ruff",
+  "cursorpyright.analysis.autoImportCompletions": true,
+  "cursorpyright.analysis.autoSearchPaths": true,
+  "cursorpyright.analysis.extraPaths": ["${workspaceFolder}/**/site-packages"],
+  "cursorpyright.analysis.typeCheckingMode": "basic"
 }
