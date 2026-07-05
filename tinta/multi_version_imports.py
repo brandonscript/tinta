@@ -1,29 +1,14 @@
-import sys
-from typing import Any, Callable
+#!/usr/bin/env python
 
-# Literal
-if sys.version_info >= (3, 8):
-    from typing import Literal
-elif sys.version_info >= (3, 5):
-    from typing_extensions import Literal
-else:
-    from typing import Literal
+# Tinta — Copyright (c) 2026 github.com/brandonscript
+# Licensed under the MIT License. See LICENSE.
 
-# TypeVar
-if sys.version_info >= (3, 5):
-    from typing import TypeVar
+from typing import Callable, Literal, ParamSpec, TypeVar
 
-    T = TypeVar("T")
-
-# ParamSpec, GenericCallable
-if sys.version_info >= (3, 10):
-    from typing import Literal, ParamSpec
-
-    P = ParamSpec("P")
-    R = TypeVar("R")  # type: ignore
-    GenericCallable = Callable[P, R]
-else:
-    GenericCallable = Any
+P = ParamSpec("P")
+T = TypeVar("T")
+R = TypeVar("R")
+GenericCallable = Callable[P, R]
 
 __all__ = [
     "GenericCallable",

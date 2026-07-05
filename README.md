@@ -4,7 +4,7 @@
 
 Tinta is a magical console output tool with support for printing in beautiful colors and with rich formatting, like bold and underline, using static, chain-able methods. It's so pretty, it's almost like a unicorn!
 
-![version](https://img.shields.io/badge/version-0.1.7-green.svg) [_![GitHub Actions Badge](https://img.shields.io/github/actions/workflow/status/brandonscript/tinta/run-tests.yml)_](https://github.com/brandonscript/tinta/actions) [_![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)_](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=brandonscript/tinta&utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) ![MIT License](https://img.shields.io/github/license/brandonscript/tinta) [_![](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162)_](https://img.shields.io/badge/ethical-source-%23bb8c3c?labelColor=393162) [_![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)_](code_of_conduct.md)
+![version](https://img.shields.io/badge/version-1.0.0-green.svg) [_![GitHub Actions Badge](https://img.shields.io/github/actions/workflow/status/brandonscript/tinta/run-tests.yml)_](https://github.com/brandonscript/tinta/actions) [_![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)_](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=brandonscript/tinta&utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) ![MIT License](https://img.shields.io/github/license/brandonscript/tinta) [_![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)_](code_of_conduct.md)
 
 ## Features and Tinta Basics
 
@@ -56,6 +56,8 @@ Glad you asked! Here are some pretty pictures:
 <img width="600" alt="Starbase" src="https://user-images.githubusercontent.com/1480253/118717091-734b4b80-b7da-11eb-9ecc-5cae5888878b.png" />
 
 ## Installation and Getting Started
+
+Requires **Python 3.10 or later**.
 
 ### Install Tinta
 
@@ -345,13 +347,26 @@ Sometimes it's useful to globally configure `Tinta` on a system where you might 
 
 `TINTA_SMART_FIX_PUNCTUATION` – Controls smart punctuation fixing (default: `true`)
 
-## Running Tests
+## Development Setup
 
-To run tests, run the following command:
+Install all dev dependencies with [Poetry](https://python-poetry.org):
 
 ```bash
-pip install pytest
-python -m pytest -v
+poetry install
+```
+
+Then run tests, lint, etc.:
+
+```bash
+poetry run pytest          # run tests
+poetry run lint-check      # ruff lint check
+poetry run lint-fix        # ruff lint fix
+```
+
+Builds use Hatchling (not `poetry build`):
+
+```bash
+hatchling build
 ```
 
 ## Contributing
@@ -364,4 +379,6 @@ Special thanks to [_@katherinecodes_](https://twitter.com/katherinecodes) for [_
 
 ## License
 
-Tinta is licensed under the [_MIT License_](LICENSE). If you use this software, you must also agree under the terms of the Hippocratic License 3.0 to not use this software in a way that directly or indirectly causes harm. You can find the full text of the license at https://firstdonoharm.dev.
+Tinta is licensed under the [MIT License](LICENSE).
+
+We encourage users to abide by the spirit of the [Hippocratic License](https://firstdonoharm.dev) and not use this software in a way that directly or indirectly causes harm. This is a request, not a license condition.
