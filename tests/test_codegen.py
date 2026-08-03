@@ -25,6 +25,27 @@ O = "\x1b[0m"
 ROOT = Path(__file__).resolve().parents[1]
 
 
+def _mypy_available() -> bool:
+    return importlib.util.find_spec("mypy") is not None
+
+
+def _run_mypy(*paths: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [
+            sys.executable,
+            "-m",
+            "mypy",
+            "--strict",
+            "--ignore-missing-imports",
+            *paths,
+        ],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+
 def test_parse_colors_ini_includes_gray_aliases():
     colors = parse_colors_ini(ROOT / "tinta" / "colors.ini")
     assert "gray" in colors
@@ -116,6 +137,7 @@ def test_cli_codegen(tmp_path):
     assert "def viridian(self" in out.read_text(encoding="utf-8")
 
 
+@pytest.mark.skipif(not _mypy_available(), reason="mypy is not installed")
 def test_mypy_accepts_generated_custom_color(tmp_path):
     ini = tmp_path / "colors.ini"
     ini.write_text("[colors]\nviridian = 42\n", encoding="utf-8")
@@ -137,23 +159,11 @@ reveal.print()
         encoding="utf-8",
     )
 
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "mypy",
-            "--strict",
-            "--ignore-missing-imports",
-            str(fixture),
-        ],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = _run_mypy(str(fixture))
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+@pytest.mark.skipif(not _mypy_available(), reason="mypy is not installed")
 def test_mypy_accepts_default_color_methods(tmp_path):
     fixture = tmp_path / "check_mint.py"
     fixture.write_text(
@@ -165,18 +175,5 @@ t.print()
 """,
         encoding="utf-8",
     )
-    result = subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "mypy",
-            "--strict",
-            "--ignore-missing-imports",
-            str(fixture),
-        ],
-        cwd=ROOT,
-        capture_output=True,
-        text=True,
-        check=False,
-    )
+    result = _run_mypy(str(fixture))
     assert result.returncode == 0, result.stdout + result.stderr
