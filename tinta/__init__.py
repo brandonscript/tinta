@@ -5,7 +5,9 @@
 
 from logging import getLogger
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
+
+__all__ = ["Tinta", "__version__"]
 
 logger = getLogger(__name__)
 

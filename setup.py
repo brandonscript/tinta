@@ -12,7 +12,7 @@ with Path("README.md").open(encoding="utf-8") as f:
 
 setup(
     name="tinta",
-    version="1.0.0",
+    version="1.1.0",
     description="Tinta, a magical console output tool.",
     long_description=long_description,
     long_description_content_type="text/markdown",

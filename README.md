@@ -4,7 +4,7 @@
 
 Tinta is a magical console output tool with support for printing in beautiful colors and with rich formatting, like bold and underline, using static, chain-able methods. It's so pretty, it's almost like a unicorn!
 
-![version](https://img.shields.io/badge/version-1.0.0-green.svg) [_![GitHub Actions Badge](https://img.shields.io/github/actions/workflow/status/brandonscript/tinta/run-tests.yml)_](https://github.com/brandonscript/tinta/actions) [_![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)_](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=brandonscript/tinta&utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) ![MIT License](https://img.shields.io/github/license/brandonscript/tinta) [_![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)_](code_of_conduct.md)
+![version](https://img.shields.io/badge/version-1.1.0-green.svg) [_![GitHub Actions Badge](https://img.shields.io/github/actions/workflow/status/brandonscript/tinta/run-tests.yml)_](https://github.com/brandonscript/tinta/actions) [_![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)_](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=brandonscript/tinta&utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) ![MIT License](https://img.shields.io/github/license/brandonscript/tinta) [_![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)_](code_of_conduct.md)
 
 ## Features and Tinta Basics
 
@@ -20,6 +20,7 @@ Tinta.load_colors('colors.ini')
 Tinta().wine('sip')
 ```
 
+For mypy/pyright support of custom colors, generate a typed subclass with `python -m tinta codegen` (see below).
 You can make a really simple drop-in `print()` replacement:
 
 ```python
@@ -81,10 +82,12 @@ An example `colors.ini` file might look like:
 
 ```ini
 # A list of ansi colors for your console.
-green: 35
-red: 1
-blue: 32
-yellow: 214
+[colors]
+green = 35
+red = 1
+blue = 32
+yellow = 214
+viridian = 42
 ```
 
 Or modify the `Tinta` colors.ini from [_here_](https://github.com/brandonscript/tinta/blob/main/tinta/colors.ini).
@@ -96,6 +99,33 @@ from pathlib import Path
 from tinta import Tinta
 Tinta.load_colors(Path().cwd() / 'config/colors.ini')
 ```
+
+> **Note:** `Tinta.load_colors()` **replaces** the active color map (it does not merge with the defaults). If your project ini only defines `blue`, `mint`, and `viridian`, only those color methods are available after loading.
+
+### Typed custom colors (mypy / pyright)
+
+Default colors from Tinta's bundled `colors.ini` are typed out of the box (`Tinta().mint(...)` type-checks).
+
+For **custom** colors in your own `colors.ini`, generate a typed subclass so editors and type checkers recognize methods like `.viridian()` without `# type: ignore`:
+
+```bash
+python -m tinta codegen path/to/colors.ini -o path/to/tinta_colors.py
+```
+
+```python
+from path.to.tinta_colors import Tinta  # generated subclass
+
+Tinta.load_colors("path/to/colors.ini")
+Tinta().viridian("hello").print()
+```
+
+You can also write the typed module when loading colors:
+
+```python
+Tinta.load_colors("path/to/colors.ini", typings_out="path/to/tinta_colors.py")
+```
+
+Regenerate the typed module whenever you add or rename colors in your ini.
 
 ### Customizing your colors
 
@@ -165,7 +195,7 @@ python examples/basic_example.py
 
 #### Dynamic methods
 
-These methods are loaded dynamically from your `colors.ini` file:
+These methods are loaded dynamically from your `colors.ini` file at runtime:
 
 ```python
 Tinta().green()
@@ -176,18 +206,7 @@ Tinta().my_color()
 # etc.
 ```
 
-A note on linters like Pylance or pylint: these methods are dynamically generated, so they won't be recognized by your linter as built-in methods. Until Python natively supports type definitions for dynamically generated code, you may have to suppress these warnings:
-
-```python
-# pyright: reportGeneralTypeIssues=false
-Tinta().green() # or
-# pylint: disable=no-member
-Tinta().green()
-
-Tinta().green() # type: ignore
-```
-
-If this is frustrating, you can always use the `Tinta.tint(<color>)` methods, which are not dynamically generated.
+Default bundled colors are declared on `Tinta` for type checkers. For custom project colors, generate a typed subclass with `python -m tinta codegen` (see [Typed custom colors](#typed-custom-colors-mypy--pyright) above). You can always use `Tinta.tint(<color>)` as a non-dynamic alternative.
 
 ### Common Args
 
