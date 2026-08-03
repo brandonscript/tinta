@@ -14,9 +14,11 @@ import os
 import re
 import sys
 from pathlib import Path
-from typing import Any, List, Optional, overload, Sequence, Union
+from typing import Any, Callable, List, Optional, overload, Sequence, Union
 
+from ._color_methods import _ColorMethods
 from .ansi import AnsiColors
+from .codegen import RESERVED_COLOR_NAMES, write_typings
 from .constants import (
     ANSI_STYLES,
     CURSOR_UP_ONE,
@@ -46,12 +48,26 @@ class _MetaTinta(type):
             cls._colors = AnsiColors()
             cls._initialized = True
 
-    def load_colors(cls, path: Union[str, Path]):
+    def load_colors(
+        cls,
+        path: Union[str, Path],
+        typings_out: Optional[Union[str, Path]] = None,
+    ):
+        """Load colors from an ini file, replacing the current color map.
+
+        Args:
+            path: Path to a colors.ini file (or a directory containing one).
+            typings_out: Optional path to write a generated typed Tinta
+                subclass module for mypy/pyright. Does not affect runtime.
+        """
         AnsiColors._initialized = False
         cls._colors = AnsiColors(path)
+        if typings_out is not None:
+            ini = cls._colors._colors_ini_path or path
+            write_typings(ini, typings_out)
 
 
-class Tinta(metaclass=_MetaTinta):
+class Tinta(_ColorMethods, metaclass=_MetaTinta):
     """Tinta is a magical console output tool with support for printing in
     beautiful colors and with rich formatting, like bold and underline. It's
     so pretty, it's almost like a unicorn.
@@ -112,11 +128,10 @@ class Tinta(metaclass=_MetaTinta):
         self._parts: List["Tinta.Part"] = []
         self._prefixes: List[str] = []
 
-        # Inject ANSI helper functions
+        # Inject ANSI helper functions for loaded colors (including custom ones).
+        # Declared mixin methods are safe to shadow with the same partial.
         for c in Tinta._colors.color_dict:
-            if hasattr(self, c) and not str(getattr(self, c)).startswith(
-                "functools.partial(<bound method Tinta.tint"
-            ):
+            if c in RESERVED_COLOR_NAMES or c.startswith("_"):
                 raise AttributeError(
                     f"Cannot overwrite built-in method '{c}' with color name. \
                     Please rename the color in '{Tinta._colors._colors_ini_path}'."
@@ -617,23 +632,19 @@ class Tinta(metaclass=_MetaTinta):
         self.clear()
         self._parts = []
 
-    def __getattr__(self, name: str) -> "Tinta":
-        """Returns a tinted segment of text.
+    def __getattr__(self, name: str) -> Callable[..., "Tinta"]:
+        """Fallback for unknown attributes; improves errors for missing colors.
 
         Args:
-            name (str): Name of the color.
+            name (str): Name of the color or attribute.
 
         Returns:
-            Tinta: A Tinta instance.
+            A callable color method when present on the instance.
         """
 
         if not name.startswith("_"):
-            # if hasattr(self.colors, name):
-            #     return cast("Tinta", self.tint(color=name))
-
-            # else:
             try:
-                return self.__getattribute__(name)  # type: ignore
+                return self.__getattribute__(name)  # type: ignore[no-any-return]
             except AttributeError as e:
                 known_colors = "\n - ".join(self._colors.color_list)
                 known_colors = f" - {known_colors}"
@@ -642,7 +653,7 @@ class Tinta(metaclass=_MetaTinta):
                     that doesn't exist? Available colors:\n{known_colors}\n"
                 ) from e
 
-        return self.__getattribute__(name)  # type: ignore
+        return self.__getattribute__(name)  # type: ignore[no-any-return]
 
     @staticmethod
     def discover(background=False):

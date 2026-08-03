@@ -3,7 +3,7 @@
 
 [project]
 name = "tinta"
-version = "1.0.0"
+version = "1.1.0"
 description = "Tinta, a magical console output tool."
 authors = [{ name = "Brandon Shelley", email = "brandon@pacificaviator.co" }]
 license = "MIT"
@@ -35,7 +35,7 @@ classifiers = [
 
 [tool.poetry]
 name = "tinta"
-version = "1.0.0"
+version = "1.1.0"
 description = "Tinta, a magical console output tool."
 authors = ["Brandon Shelley <brandon@pacificaviator.co>"]
 license = "MIT"
@@ -52,7 +52,7 @@ build-backend = "hatchling.build"
 
 [tool.hatchling.build]
 packages = ["tinta"]
-include = ["tinta/**/*.py", "tinta/**/*.pyi", "tinta/colors.ini", "/tests"]
+include = ["tinta/**/*.py", "tinta/**/*.pyi", "tinta/py.typed", "tinta/colors.ini", "/tests"]
 exclude = [".*", "dist"]
 
 [tool.hatchling.dependencies]
@@ -171,5 +171,6 @@ test = "pytest"
 build = "./dist/build.sh"
 publish-test = "./dist/publish.sh --test"
 publish-real = "./dist/publish.sh"
+set-version = "./dist/version.sh"
 lint-check = "ruff check tinta"
 lint-fix = "ruff fix tinta"
