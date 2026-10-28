@@ -4,11 +4,11 @@
 # Licensed under the MIT License. See LICENSE.
 
 
-import os
 import re
 import time
 import timeit
-from contextlib import contextmanager
+from contextlib import redirect_stdout
+from io import StringIO
 from typing import Any, Callable, Dict, List, Tuple
 
 import pytest
@@ -49,12 +49,26 @@ def _stitch(*args):
     return f"\x1b[{_join(*codes).strip(';')}m"
 
 
-@contextmanager
-def skip_on_github_actions():
-    gh = bool(os.getenv("GITHUB_ACTIONS") == "true")
-    if gh:
-        pytest.mark.skipif(True, reason="Function skipped on GitHub Actions")
-    yield gh
+class TestPrintStreams:
+
+    @pytest.mark.parametrize("explicit_none", [False, True])
+    def test_uses_current_stdout(self, explicit_none):
+        first, second = StringIO(), StringIO()
+        kwargs = {"file": None} if explicit_none else {}
+        with redirect_stdout(first):
+            Tinta("first").print(plaintext=True, **kwargs)
+        with redirect_stdout(second):
+            Tinta("second").print(plaintext=True, **kwargs)
+        assert first.getvalue() == "first\n"
+        assert second.getvalue() == "second\n"
+
+    def test_explicit_stream_overrides_stdout(self):
+        stdout, target = StringIO(), StringIO()
+        with redirect_stdout(stdout):
+            result = Tinta("target").print(file=target, plaintext=True, end="!")
+        assert result is None
+        assert target.getvalue() == "target!"
+        assert stdout.getvalue() == ""
 
 
 class TestInit:
@@ -357,10 +371,8 @@ class TestChaining:
         s = Testa().to_str(**kwargs)
         Testa().print(**kwargs)
         assert s == expected
-        with skip_on_github_actions() as skip:
-            if not skip:
-                out = capfd.readouterr().out
-                assert out == f"{expected}\n"
+        out = capfd.readouterr().out
+        assert out == f"{expected}\n"
 
     @pytest.mark.parametrize(
         "Testa,expected",
@@ -544,10 +556,8 @@ class TestWhiteSpace:
         s = Testa().to_str()
         assert s == expected
         Testa().print()
-        with skip_on_github_actions() as skip:
-            if not skip:
-                out = capfd.readouterr().out
-                assert out == f"{expected}\n"
+        out = capfd.readouterr().out
+        assert out == f"{expected}\n"
 
     @pytest.mark.parametrize(
         "Testa,expected",
@@ -559,10 +569,8 @@ class TestWhiteSpace:
         p = Testa().to_str(plaintext=True)
         assert p == expected
         Testa().print(plaintext=True)
-        with skip_on_github_actions() as skip:
-            if not skip:
-                out = capfd.readouterr().out
-                assert out == f"{expected}\n"
+        out = capfd.readouterr().out
+        assert out == f"{expected}\n"
 
     @pytest.mark.parametrize(
         "Testa,expected",
@@ -579,10 +587,8 @@ class TestWhiteSpace:
         # Reset ANSI char is always placed before trailing whitespace
         assert Tinta().purple(s).to_str() == _expected
         Tinta().purple(s).print()
-        with skip_on_github_actions() as skip:
-            if not skip:
-                out = capfd.readouterr().out
-                assert out == f"{_expected}\n"
+        out = capfd.readouterr().out
+        assert out == f"{_expected}\n"
 
     @pytest.mark.parametrize(
         "Testa,expected",
@@ -594,10 +600,8 @@ class TestWhiteSpace:
         p = Testa().to_str(plaintext=True)
         assert Tinta().purple(p).to_str(plaintext=True) == expected
         Tinta().purple(p).print(plaintext=True)
-        with skip_on_github_actions() as skip:
-            if not skip:
-                out = capfd.readouterr().out
-                assert out == f"{expected}\n"
+        out = capfd.readouterr().out
+        assert out == f"{expected}\n"
 
     @pytest.mark.parametrize(
         "Testa,expected",
@@ -620,10 +624,8 @@ class TestWhiteSpace:
             == f"{expected_purple}{sep}{expected_pink}"
         )
         Tinta().purple(s).pink(s).print()
-        with skip_on_github_actions() as skip:
-            if not skip:
-                out = capfd.readouterr().out
-                assert out == f"{expected_purple}{sep}{expected_pink}\n"
+        out = capfd.readouterr().out
+        assert out == f"{expected_purple}{sep}{expected_pink}\n"
 
     @pytest.mark.parametrize(
         "Testa,expected",
@@ -642,10 +644,8 @@ class TestWhiteSpace:
             == f"{expected}{sep}{expected}"
         )
         Tinta().purple(p).pink(p).print(plaintext=True)
-        with skip_on_github_actions() as skip:
-            if not skip:
-                out = capfd.readouterr().out
-                assert out == f"{expected}{sep}{expected}\n"
+        out = capfd.readouterr().out
+        assert out == f"{expected}{sep}{expected}\n"
 
     def test_sep_inherits_prev_part_color(self):
         assert (

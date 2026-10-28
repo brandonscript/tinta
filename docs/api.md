@@ -37,11 +37,12 @@ to true or the parsed `TINTA_SMART_FIX_PUNCTUATION` value, both read at import t
 | `t.pop(qty=1)` | Returns `t`; removes up to `qty` trailing segments. |
 | `t.nl(*s, sep=SEP)` | Returns `t`; prefixes the supplied text with a newline. |
 | `t.to_str(sep=None, plaintext=False, escape_ansi=False, fix_punctuation=SMART_FIX_PUNCTUATION)` | Returns `str` without clearing segments. `plaintext` takes precedence over `escape_ansi`. |
-| `t.print(sep=None, end="\n", file=sys.stdout, flush=False, plaintext=False, force=False)` | Returns `None`. Writes and then clears segments and styling; when stealth suppresses output, the instance is preserved. |
+| `t.print(sep=None, end="\n", file=None, flush=False, plaintext=False, force=False)` | Returns `None`. Writes and then clears segments and styling; when stealth suppresses output, the instance is preserved. |
 | `Tinta.load_colors(path, typings_out=None)` | Returns `None`; replaces the shared palette, optionally writing a typed subclass module. Call before creating instances. |
 | `Tinta.discover(background=False)` | Returns `None`; prints the terminal color chart. |
 
 For `print()` and `to_str()`, `sep=None` preserves each segment's separator.
+`file=None` uses the current `sys.stdout`, including stdout redirections.
 `print()` supports `force=True` to override stealth. Add text with builder methods
 before printing. Use `to_str()` for `escape_ansi` or per-call `fix_punctuation`.
 

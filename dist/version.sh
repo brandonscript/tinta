@@ -88,7 +88,7 @@ if [[ "$DRY_RUN" == true && -z "$NEW_VERSION" ]]; then
 fi
 
 if [[ -n "$NEW_VERSION" ]]; then
-    if ! [[ "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([a-zA-Z0-9.\-+]*)?$ ]]; then
+    if ! [[ "$NEW_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([a-zA-Z0-9.+-]*)?$ ]]; then
         echo "error: invalid version '$NEW_VERSION' (expected e.g. 1.2.3 or 1.2.3a1)" >&2
         exit 1
     fi

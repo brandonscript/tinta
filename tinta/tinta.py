@@ -591,7 +591,7 @@ class Tinta(_ColorMethods, metaclass=_MetaTinta):
         self,
         sep: Optional[str] = None,
         end="\n",
-        file=sys.stdout,
+        file=None,
         flush=False,
         plaintext=False,
         force=False,
@@ -608,7 +608,7 @@ class Tinta(_ColorMethods, metaclass=_MetaTinta):
         Args:
             sep (str, optional): Used to join strings. Defaults to ' ', or whatever was used when the part was added. Setting this will override the part's separator.
             end (str, optional): String terminator. Defaults to '\n'.
-            file (optional): File to write to. Defaults to sys.stdout.
+            file (optional): File to write to. None uses the current sys.stdout.
             flush (bool, optional): Clears the current console line.
             plaintext (bool, optional): Prints in plaintext. Defaults to False.
             force (bool, option): Forces printing, overriding TINTA_STEALTH.

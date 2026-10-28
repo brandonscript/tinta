@@ -4,7 +4,7 @@
 
 Tinta is a magical console output tool with support for printing in beautiful colors and with rich formatting, like bold and underline, using chainable instance methods. It's so pretty, it's almost like a unicorn!
 
-![version](https://img.shields.io/badge/version-1.1.0-green.svg) [_![GitHub Actions Badge](https://img.shields.io/github/actions/workflow/status/brandonscript/tinta/run-tests.yml)_](https://github.com/brandonscript/tinta/actions) [_![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)_](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=brandonscript/tinta&utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) [![PyPI downloads](https://img.shields.io/pypi/dm/tinta)](https://pypi.org/project/tinta/) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [_![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)_](CODE_OF_CONDUCT.md)
+![version](https://img.shields.io/badge/version-1.1.1-green.svg) [_![GitHub Actions Badge](https://img.shields.io/github/actions/workflow/status/brandonscript/tinta/run-tests.yml)_](https://github.com/brandonscript/tinta/actions) [_![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)_](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=brandonscript/tinta&utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) [![PyPI downloads](https://img.shields.io/pypi/dm/tinta)](https://pypi.org/project/tinta/) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [_![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)_](CODE_OF_CONDUCT.md)
 
 ## Features and Tinta Basics
 
@@ -275,7 +275,7 @@ Remember, all of the following methods return the current `Tinta` instance `-> s
 Prints to the console. Probably the most important method, because if you don't print, you don't see anything at all!
 A good first step in troubleshooting is checking that you remembered to `print()` (ask me how I know...)
 
-`print(sep=None, end="\n", file=sys.stdout, flush=False, plaintext=False, force=False)` writes the current segments and returns `None`.
+`print(sep=None, end="\n", file=None, flush=False, plaintext=False, force=False)` writes the current segments and returns `None`.
 
 - `sep` overrides segment separators; `None` preserves each segment's separator.
 - `end`, `file`, and `flush` have the same purpose as in Python's built-in `print()`.
