@@ -2,9 +2,9 @@
 
 <img width="200" alt="Tinta Logo" src="https://user-images.githubusercontent.com/1480253/118584629-38023b80-b74c-11eb-8511-05258af553fb.png" />
 
-Tinta is a magical console output tool with support for printing in beautiful colors and with rich formatting, like bold and underline, using static, chain-able methods. It's so pretty, it's almost like a unicorn!
+Tinta is a magical console output tool with support for printing in beautiful colors and with rich formatting, like bold and underline, using chainable instance methods. It's so pretty, it's almost like a unicorn!
 
-![version](https://img.shields.io/badge/version-1.1.0-green.svg) [_![GitHub Actions Badge](https://img.shields.io/github/actions/workflow/status/brandonscript/tinta/run-tests.yml)_](https://github.com/brandonscript/tinta/actions) [_![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)_](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=brandonscript/tinta&utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) [![PyPI downloads](https://img.shields.io/pypi/dm/tinta)](https://pypi.org/project/tinta/) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [_![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)_](code_of_conduct.md)
+![version](https://img.shields.io/badge/version-1.1.0-green.svg) [_![GitHub Actions Badge](https://img.shields.io/github/actions/workflow/status/brandonscript/tinta/run-tests.yml)_](https://github.com/brandonscript/tinta/actions) [_![Codacy Badge](https://app.codacy.com/project/badge/Grade/32bf3e3172cf434b914647f06569a836)_](https://www.codacy.com/gh/brandonscript/tinta/dashboard?utm_source=github.com&utm_medium=referral&utm_content=brandonscript/tinta&utm_campaign=Badge_Grade) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/tinta) [![PyPI downloads](https://img.shields.io/pypi/dm/tinta)](https://pypi.org/project/tinta/) [![MIT License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [_![Contributor Covenant](https://img.shields.io/badge/Contributor%20Covenant-2.0-4baaaa.svg)_](CODE_OF_CONDUCT.md)
 
 ## Features and Tinta Basics
 
@@ -191,6 +191,8 @@ python examples/basic_example.py
 
 ## API Reference
 
+See the [API guide](docs/api.md) for signatures, return values, and complete examples.
+
 ### Tinta (+ color methods)
 
 #### Dynamic methods
@@ -206,7 +208,7 @@ Tinta().my_color()
 # etc.
 ```
 
-Default bundled colors are declared on `Tinta` for type checkers. For custom project colors, generate a typed subclass with `python -m tinta codegen` (see [Typed custom colors](#typed-custom-colors-mypy--pyright) above). You can always use `Tinta.tint(<color>)` as a non-dynamic alternative.
+Default bundled colors are declared on `Tinta` for type checkers. For custom project colors, generate a typed subclass with `python -m tinta codegen` (see [Typed custom colors](#typed-custom-colors-mypy--pyright) above). You can always use `Tinta().tint(<color>, text)` as an alternative to named color methods. Color and style methods require a `Tinta` instance.
 
 ### Common Args
 
@@ -240,10 +242,10 @@ Tinta('A set', 'of strings', 'joined', 'with', 'double spaces').print(sep='  ')
 
 All `Tinta` and dynamic color methods will make available the following attributes:
 
-- `color (str)` — A color string or ANSI color code (int), e.g. 'white' or 42.
-- `style (str)` — A style string, e.g. 'bold', 'dim', 'underline'. Multiple styles are joined with a +.
-- `parts (list)` — A list of `Tinta.Part` segments, which each have a `fmt`, `pln`, and `esc` attribute.
-- ~~`parts_plaintext (list)` — A list of unstyled text segments.~~
+- `color (str)` — The current color name, e.g. `'white'`; use `color_code` for its integer ANSI index.
+- `style (list[str])` — Active style names, e.g. `['bold', 'underline']`.
+- `parts (list)` — A list of `Tinta.Part` segments, which expose `pln`, `fmt(...)`, and `esc(...)`.
+- `parts_pln (list[str])` — The plain text of each segment.
 
 ### Built-in Methods
 
@@ -273,22 +275,23 @@ Remember, all of the following methods return the current `Tinta` instance `-> s
 Prints to the console. Probably the most important method, because if you don't print, you don't see anything at all!
 A good first step in troubleshooting is checking that you remembered to `print()` (ask me how I know...)
 
-This supports all the built-in Python 3 `print()` methods, too (`sep`, `end`, `file`, `flush`), as well as:
+`print(sep=None, end="\n", file=sys.stdout, flush=False, plaintext=False, force=False)` writes the current segments and returns `None`.
 
-- `sep (str)` – Used to join segment strings. Defaults to `' '`.
-- `plaintext (bool)` – Returns a compiled plaintext string
-- `escape_ansi (bool)` – If True, escapes ANSI codes with a double \\. Defaults to `False`.
-- `fix_punctuation (bool)` – If True, fixes common punctuation issues. Defaults to `True`, or the value of `'env::TINTA_SMART_FIX_PUNCTUATION'`.
-  and
-- `s* (str)` – You can also pass any arbitrary sequence of strings to `print()` to push additional segments.
+- `sep` overrides segment separators; `None` preserves each segment's separator.
+- `end`, `file`, and `flush` have the same purpose as in Python's built-in `print()`.
+- `plaintext=True` prints without ANSI formatting.
+- `force=True` prints even when `TINTA_STEALTH` is enabled.
+
+Add text with `push()` or another builder method before calling `print()`:
 
 ```python
-# Prints in plaintext
-Tinta().purple("Is it a bird?").print("No, maybe it's a...", plaintext=True)
+from tinta import Tinta
 
-# Always prints, even if 'env::TINTA_STEALTH' is set)
+Tinta().purple("Is it a bird?").push("No, maybe it's a...").print(plaintext=True)
 Tinta().green('Plane?').print(force=True)
 ```
+
+For escaped ANSI output or per-call punctuation control, use `to_str()` instead.
 
 It's also important to note that `print()` doesn't make a variable unusable, but it will reset and remove all styles and previous segments. This means you can do:
 
@@ -303,7 +306,20 @@ t.green('An old, wise, and very small alien').print()
 
 > _Previously `text()`_
 
-Constructs the string that would be sent to `print()`, but returns it instead of printing it. Accepts all the same arguments as `print()` except `file` and `flush`.
+`to_str(sep=None, plaintext=False, escape_ansi=False, fix_punctuation=SMART_FIX_PUNCTUATION) -> str` returns the current segments as a string without clearing them.
+
+- `sep=None` preserves segment separators; a string overrides them.
+- `plaintext=True` removes ANSI formatting.
+- `escape_ansi=True` escapes ANSI control characters for inspection. `plaintext` takes precedence.
+- `fix_punctuation` controls punctuation spacing for this call; its default comes from `TINTA_SMART_FIX_PUNCTUATION`.
+
+```python
+from tinta import Tinta
+
+t = Tinta().green("Hello").bold("world")
+assert t.to_str(plaintext=True) == "Hello world"
+escaped = t.to_str(escape_ansi=True)
+```
 
 #### `()` or `push()`
 
@@ -321,7 +337,7 @@ else:
     t.push('but I am sad.')
 t.print()
 
-Tinta().brown('I')('am a brown bear').black(', and I am a')('black bear.').print()
+Tinta().amber('I')('am an amber bear').black(', and I am a')('black bear.').print()
 ```
 
 #### `nl()`
@@ -329,7 +345,7 @@ Tinta().brown('I')('am a brown bear').black(', and I am a')('black bear.').print
 Adds a text segment preceded by a newline.
 
 ```python
-Tinta('A cat').line('scratches').print()
+Tinta('A cat').nl('scratches').print()
 # A cat
 # scratches
 ```
@@ -344,19 +360,19 @@ Just set the `color` kwarg to specify an ANSI color code or string name:
 
 ```python
 Tinta().tint('A bear who knows all the answers', color=42).print()
-Tinta().tint('A brown bear', color='brown').print()
+Tinta().tint('An amber bear', color='amber').print()
 ```
 
 If you don't pass a color kwarg, the first argument will be used as the color:
 
 ```python
 Tinta().tint(42, 'A bear who knows all the answers').print()
-Tinta().tint('brown', 'A brown bear').print()
+Tinta().tint('amber', 'An amber bear').print()
 ```
 
 ## Environment Variables
 
-Sometimes it's useful to globally configure `Tinta` on a system where you might want it to behave differently, without changing your source code. If these Environment variables are present on the system, they will be considered True.
+Sometimes it's useful to globally configure `Tinta` on a system where you might want it to behave differently, without changing your source code. Set these variables before importing `tinta`; their values are read at import time. Boolean settings accept `true`, `1`, `t`, `y`, and `yes` (case-insensitive) as true; other values, including `false` and `0`, are false. `TINTA_SEPARATOR` is a string, not a boolean.
 
 `TINTA_STEALTH` – Disables console output globally
 
